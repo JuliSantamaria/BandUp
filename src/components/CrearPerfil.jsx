@@ -31,7 +31,7 @@ const CreateProfile = ({navigation}) => {
         style={styles.input}
         placeholder="Your location"
       />
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('GenerosMusicales')}>
         <Text style={styles.buttonText}>Siguiente</Text>
       </TouchableOpacity>
     </View>

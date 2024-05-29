@@ -12,12 +12,10 @@ const Code = ({navigation}) => {
       <TextInput
         style={styles.input}
         placeholder="Codigo"
-        
       />
-      <TouchableOpacity style={styles.button} onPress={ () => navigation.navigate('ResetPassword')}>
+      <TouchableOpacity style={styles.button} onPress={ () => navigation.navigate('profile')}>
         <Text style={styles.buttonText}>Confirmar</Text>
       </TouchableOpacity>
-      
       <TouchableOpacity style= {styles.buttontype3}>
         <Text style= {styles.buttontypetext}>Registrate</Text> 
       </TouchableOpacity>
@@ -85,4 +83,5 @@ const styles = StyleSheet.create({
     },
   });
 
-export default Code;
+
+export default Code; 

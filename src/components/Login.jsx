@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
-import { auth } from '../../credenciales'; // Importa la instancia de auth configurada
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import  {getAuth, signInWithEmailAndPassword}  from 'firebase/auth';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,11 +8,11 @@ const LoginScreen = ({ navigation }) => {
 
   const logueo = async () => {
     try {
+      const auth = getAuth();
       await signInWithEmailAndPassword(auth, email, password);
       Alert.alert('Iniciando sesión', 'Accediendo...');
       navigation.navigate('home');
     } catch (error) {
-      console.log(error);
       Alert.alert('❌ Error de inicio de sesión', 'Email o contraseña incorrectos, inténtelo nuevamente');
     }
   };
@@ -26,15 +25,15 @@ const LoginScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Tu email"
-        value={email}
         onChangeText={setEmail}
+        value={email}
       />
       <Text style={styles.subtitle2}>Contraseña</Text>
       <TextInput
         style={styles.input}
         placeholder="Tu contraseña"
-        value={password}
         onChangeText={setPassword}
+        value={password}
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={logueo}>

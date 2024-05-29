@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import { credenciales } from "../../credenciales"
+import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import {getAuth, createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
+import auth from '../../credenciales'
 
 const SignUpForm = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -9,7 +9,7 @@ const SignUpForm = ({navigation}) => {
 
   const handleSignUp = async () => {
     try {
-      const auth = getAuth();
+      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -18,12 +18,11 @@ const SignUpForm = ({navigation}) => {
         'Registro exitoso',
         'Usuario creado con éxito ✔️. Por favor, verifica tu correo electrónico.',
         [{ text: 'OK' }]
-      );
+      ); 
 
-      navigation.navigate('Code'); // Navega a la pantalla para ingresar el código
+      navigation.navigate('Code'); 
     } catch (error) {
-      console.log("ERROR", error);
-      Alert.alert('Error', error.message);
+      console.log(error)
     }
   };
 

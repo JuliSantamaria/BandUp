@@ -8,8 +8,15 @@ const ForgotPassword = ({navigation}) => {
     return(
     <View style={styles.container}>
       <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
-      <Text style={styles.title}>Reset your password</Text>
-      <Text style={styles.subtitle}>Type your account email and you will receive a code for a new password.</Text>
+      <Text style={styles.title}>Restablece tu contraseña</Text>
+      <Text style={styles.subtitle}>Escribe el correo electrónico de tu cuenta y recibirás un código para una nueva contraseña.
+
+
+
+
+
+
+</Text>
       <Text style={styles.subtitle1}>Email</Text>
       <TextInput
         style={styles.input}
@@ -21,7 +28,7 @@ const ForgotPassword = ({navigation}) => {
       </TouchableOpacity>
       
       <TouchableOpacity style= {styles.buttontype3}>
-        <Text style= {styles.buttontypetext}>Sign up</Text> 
+        <Text style= {styles.buttontypetext}>Registrate</Text> 
       </TouchableOpacity>
     </View>
     )
