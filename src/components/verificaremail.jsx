@@ -6,8 +6,8 @@ const Code = ({navigation}) => {
     return(
     <View style={styles.container}>
       <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
-      <Text style={styles.title}>Codigo</Text>
-      <Text style={styles.subtitle}>Ingresa el codigo que hemos enviado a tu correo electronico</Text>
+      <Text style={styles.title}>Verifica tu email</Text>
+      <Text style={styles.subtitle}>Ingresa al enlace que hemos enviado a tu correo electronico</Text>
       <Text style={styles.subtitle1}>Codigo</Text>
       <TextInput
         style={styles.input}

@@ -1,16 +1,51 @@
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Login from "./src/components/Login"; 
 import ForgotPassword from "./src/components/ForgotPassword";
 import ResetPassword from './src/components/ResetPassword';
 import Home from './src/components/Home';
 import Registro from './src/components/registrousuario';
 import CreateProfile from './src/components/CrearPerfil';
-import Code from './src/components/Code';
+import verificaremail from './src/components/verificaremail';
 import Generosmusicales from './src/components/GenerosMusicales';
+import Profile from './src/components/profile';
+import Settings from './src/components/settings';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+function HomeTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = 'home';
+          } else if (route.name === 'Profile') {
+            iconName = 'person';
+          } else if (route.name === 'Settings') {
+            iconName = 'settings';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
+      tabBarOptions={{
+        activeTintColor: 'tomato',
+        inactiveTintColor: 'gray',
+      }}
+    >
+      <Tab.Screen name="Home" component={Home} options={{headerShown: false}} />
+      <Tab.Screen name="Profile" component={Profile} options={{headerShown: false}}/>
+      <Tab.Screen name="Settings" component={Settings} options={{headerShown: false}}/>
+    </Tab.Navigator>
+  );
+}
 
 export default function App() {
   return (
@@ -41,13 +76,17 @@ export default function App() {
           component={CreateProfile} 
           options={{title: 'profile', headerShown: false}} />
         <Stack.Screen 
-          name="Code" 
-          component={Code} 
-          options={{title: 'Codigo', headerShown: false}} />
+          name="verifyemail" 
+          component={verificaremail} 
+          options={{title: 'verify', headerShown: false}} />
         <Stack.Screen 
           name="GenerosMusicales" 
           component={Generosmusicales} 
           options={{title: 'genres', headerShown: false}} />
+        <Stack.Screen 
+          name="HomeTabs" 
+          component={HomeTabs} 
+          options={{ title: 'Home', headerShown: false }} />
         
       </Stack.Navigator>
     </NavigationContainer>

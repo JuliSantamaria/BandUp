@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import {getAuth, createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
 import auth from '../../credenciales'
 
 const SignUpForm = ({navigation}) => {
@@ -9,22 +9,23 @@ const SignUpForm = ({navigation}) => {
 
   const handleSignUp = async () => {
     try {
-      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
+  
       await sendEmailVerification(user);
       Alert.alert(
         'Registro exitoso',
         'Usuario creado con éxito ✔️. Por favor, verifica tu correo electrónico.',
         [{ text: 'OK' }]
-      ); 
-
-      navigation.navigate('Code'); 
+      );
+  
+      navigation.navigate('verifyemail'); // Redirige a la pantalla de verificación
+  
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
+  
 
   return (
     <View style={styles.container}>

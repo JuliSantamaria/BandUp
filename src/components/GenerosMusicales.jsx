@@ -1,113 +1,144 @@
- import React, {useState} from 'react';
-import { View, Text, TextInput,FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
-const Generosmusicales = ({navigation}) => {
+const Generosmusicales = ({ navigation }) => {
     const [items, setItems] = useState([
-        { id: '1', name: 'Option 1' },
-        { id: '2', name: 'Option 2' },
-        { id: '3', name: 'Option 3' },
-        { id: '4', name: 'Option 4' },
-      ]);
-    
-      const [selectedItems, setSelectedItems] = useState([]);
-    
-      const toggleItem = (itemId) => {
+        { id: '1', name: 'Pop' },
+        { id: '2', name: 'Rock' },
+        { id: '3', name: 'Jazz' },
+        { id: '4', name: 'Metal' },
+        { id: '5', name: 'Classic' },
+        { id: '6', name: 'Techno' },
+    ]);
+
+    const [selectedItems, setSelectedItems] = useState([]);
+
+    const toggleItem = (itemId) => {
         setSelectedItems(prevSelectedItems =>
-          prevSelectedItems.includes(itemId)
-            ? prevSelectedItems.filter(id => id !== itemId)
-            : [...prevSelectedItems, itemId]
+            prevSelectedItems.includes(itemId)
+                ? prevSelectedItems.filter(id => id !== itemId)
+                : [...prevSelectedItems, itemId]
         );
-      };
-  
+    };
 
-    return(
-    <View style={styles.container}>
-      <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
-      <Text style={styles.title}>Generos Musicales!</Text>
-      <Text style={styles.subtitle}>Elige tus generos musicales favoritos</Text>
-      <FlatList
-        data={items}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => toggleItem(item.id)}
-          >
-            <Text style={styles.itemText}>
-              {selectedItems.includes(item.id) ? '☑️' : '⬜️'} {item.name}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-      <TouchableOpacity style={styles.button} onPress={ () => navigation.navigate('Code')}>
-        <Text style={styles.buttonText}>Aceptar</Text>
-      </TouchableOpacity>
+    return (
+        <View style={styles.container}>
+            <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
+            <Text style={styles.title}>Generos Musicales!</Text>
+            <Text style={styles.subtitle}>Elige tus generos musicales favoritos</Text>
+            <FlatList
+                contentContainerStyle={styles.checklistContainer}
+                data={items}
+                keyExtractor={item => item.id}
+                renderItem={({ item }) => (
+                    <TouchableOpacity
+                        style={styles.item}
+                        onPress={() => toggleItem(item.id)}
+                    >
+                        <View style={styles.itemContent}>
+                            <Text style={styles.itemText}>
+                                {selectedItems.includes(item.id) ? '☑️' : '⬜️'}
+                            </Text>
+                            <Text style={styles.itemName}>
+                                {item.name}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
+            />
+            <View style={styles.buttonsContainer}>
+                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Code')}>
+                    <Text style={styles.buttonText}>Aceptar</Text>
+                </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button2} onPress={ () => navigation.navigate('Code')}>
-        <Text style={styles.buttonText}>Omitir</Text>
-      </TouchableOpacity>
-      
-      
-      
-    </View>
-    )
+                <TouchableOpacity style={styles.button2} onPress={() => navigation.navigate('Code')}>
+                    <Text style={styles.buttonText}>Omitir</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
+        flex: 1,
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#fff',
     },
     logo: {
-      width: 150,
-      height: 150,
-      marginBottom: 20,
+        width: 100,
+        height: 100,
+        marginBottom: 20,
     },
     title: {
-      fontSize: 30,
-      marginBottom: 20,
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        marginTop: 30, // con esto baje el titulo
     },
     subtitle: {
-       
-       marginBottom: 30,
-       textAlign: 'center',
+        fontSize: 16,
+        color: '#666',
+        marginBottom: 20,
+        textAlign: 'center',
+        marginTop: 30, // con esto baje el subtitulo
     },
-    subtitle1: {
-        marginBottom:10,
-        marginLeft: -317,
+    checklistContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        paddingVertical: 20,
+        marginTop: 5, 
     },
-  
-  button: {
-    backgroundColor: '#d55038', 
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 5,
-  },
-  button2: {
-    backgroundColor: '#d55038', 
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    marginTop: 10,
-    borderRadius: 5,
-    width: 120,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-    input: {
-      width: '100%',
-      height: 40,
-      borderColor: '#ccc',
-      borderWidth: 1,
-      marginBottom: 20,
-      paddingHorizontal: 10,
+    item: {
+        width: '100%',
+        alignItems: 'center',
     },
+    itemContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        width: '100%',
+    },
+    itemText: {
+        fontSize: 18,
+        marginLeft: 100, // con esto movi el cuadrado a los costados
+    },
+    itemName: {
+        fontSize: 18,
+        flex: 1,
+        marginLeft: -120,
+        textAlign: 'center', 
+    },
+    buttonsContainer: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    button: {
+        backgroundColor: '#d55038',
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        borderRadius: 5,
+        marginTop: 20,
+        width: '80%',
+        alignItems: 'center',
+    },
+    button2: {
+        backgroundColor: '#d55038',
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        borderRadius: 5,
+        marginTop: 10,
+        width: '80%',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+});
 
-  });
-
-export default Generosmusicales; 
+export default Generosmusicales;
