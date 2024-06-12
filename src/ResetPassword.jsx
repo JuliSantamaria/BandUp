@@ -23,7 +23,7 @@ const handleLogin = () => {
 
   return (
     <View style={styles.container}>
-      <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
+      <Image source={require('../assets/images/logobandup.png')} style={styles.logo} />
       <Text style={styles.title}>Restablece tu contraseña</Text>
       <Text style={styles.subtitle1}>Nueva contraseña</Text>
       <TextInput

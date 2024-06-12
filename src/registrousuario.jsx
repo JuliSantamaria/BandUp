@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
-import { createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
-import auth from '../../credenciales'
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { auth, db } from '../credenciales'; 
+import { doc, setDoc } from 'firebase/firestore';
 
-const SignUpForm = ({navigation}) => {
+const Registrarse = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -11,30 +12,28 @@ const SignUpForm = ({navigation}) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-  
-      await sendEmailVerification(user);
-      Alert.alert(
-        'Registro exitoso',
-        'Usuario creado con éxito ✔️. Por favor, verifica tu correo electrónico.',
-        [{ text: 'OK' }]
-      );
-  
-      navigation.navigate('verifyemail'); // Redirige a la pantalla de verificación
-  
+
+      await sendEmailVerification(user, {
+        handleCodeInApp: true,
+        url: 'https://bandup-37f42.firebaseapp.com',
+      });
+
+      Alert.alert('Verificación enviada', 'Por favor, revisa tu correo electrónico para verificar tu cuenta.')
+      navigation.navigate('profile');
+      
     } catch (error) {
-      console.log(error);
+      Alert.alert('❌ Error en el registro', error.message);
     }
   };
-  
 
   return (
     <View style={styles.container}>
-      <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
-      <Text style={styles.title}>Registrate</Text>
+      <Image source={require('../assets/images/logobandup.png')} style={styles.logo} />
+      <Text style={styles.title}>Regístrate</Text>
       <Text style={styles.subtitle1}>Email</Text>
       <TextInput
         style={styles.input}
-        placeholder="Your Email"
+        placeholder="Tu email"
         onChangeText={setEmail}
         value={email}
         keyboardType="email-address"
@@ -42,7 +41,7 @@ const SignUpForm = ({navigation}) => {
       <Text style={styles.subtitle2}>Contraseña</Text>
       <TextInput
         style={styles.input}
-        placeholder="Your Password"
+        placeholder="Tu contraseña"
         onChangeText={setPassword}
         secureTextEntry
         value={password}
@@ -51,7 +50,7 @@ const SignUpForm = ({navigation}) => {
         <Text style={styles.buttonText}>Registrarse</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.buttontype2} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.buttontypetext}>Iniciar Sesion</Text>
+        <Text style={styles.buttontypetext}>Iniciar Sesión</Text>
       </TouchableOpacity>
     </View>
   );
@@ -111,5 +110,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignUpForm;
-
+export default Registrarse;

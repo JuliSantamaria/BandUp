@@ -1,21 +1,32 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
-const Code = ({navigation}) => {
+const ForgotPassword = ({navigation}) => {
     
+  
+
     return(
     <View style={styles.container}>
-      <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
-      <Text style={styles.title}>Verifica tu email</Text>
-      <Text style={styles.subtitle}>Ingresa al enlace que hemos enviado a tu correo electronico</Text>
-      <Text style={styles.subtitle1}>Codigo</Text>
+      <Image source={require('../assets/images/logobandup.png')} style={styles.logo} />
+      <Text style={styles.title}>Restablece tu contraseña</Text>
+      <Text style={styles.subtitle}>Escribe el correo electrónico de tu cuenta y recibirás un código para una nueva contraseña.
+
+
+
+
+
+
+</Text>
+      <Text style={styles.subtitle1}>Email</Text>
       <TextInput
         style={styles.input}
-        placeholder="Codigo"
+        placeholder="Your Email"
+        
       />
-      <TouchableOpacity style={styles.button} onPress={ () => navigation.navigate('profile')}>
-        <Text style={styles.buttonText}>Confirmar</Text>
+      <TouchableOpacity style={styles.button} onPress={ () => navigation.navigate('Code')}>
+        <Text style={styles.buttonText}>Enviar Codigo</Text>
       </TouchableOpacity>
+      
       <TouchableOpacity style= {styles.buttontype3}>
         <Text style= {styles.buttontypetext}>Registrate</Text> 
       </TouchableOpacity>
@@ -83,5 +94,4 @@ const styles = StyleSheet.create({
     },
   });
 
-
-export default Code; 
+export default ForgotPassword;

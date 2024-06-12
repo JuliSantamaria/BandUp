@@ -1,31 +1,52 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { auth, db } from '../credenciales';
+import { doc, setDoc } from 'firebase/firestore';
 
-const Generosmusicales = ({ navigation }) => {
+const Instrumentos = ({ navigation }) => {
     const [items, setItems] = useState([
-        { id: '1', name: 'Pop' },
-        { id: '2', name: 'Rock' },
-        { id: '3', name: 'Jazz' },
-        { id: '4', name: 'Metal' },
-        { id: '5', name: 'Classic' },
-        { id: '6', name: 'Techno' },
+        { id: '1', name: 'Guitarra' },
+        { id: '2', name: 'Batería' },
+        { id: '3', name: 'Bajo' },
+        { id: '4', name: 'Piano' },
+        { id: '5', name: 'Flauta' },
+        { id: '6', name: 'Otro' },
     ]);
 
     const [selectedItems, setSelectedItems] = useState([]);
 
-    const toggleItem = (itemId) => {
+    const toggleItem = (itemName) => {
         setSelectedItems(prevSelectedItems =>
-            prevSelectedItems.includes(itemId)
-                ? prevSelectedItems.filter(id => id !== itemId)
-                : [...prevSelectedItems, itemId]
+            prevSelectedItems.includes(itemName)
+                ? prevSelectedItems.filter(name => name !== itemName)
+                : [...prevSelectedItems, itemName]
         );
+    };
+
+    const saveSelectedItems = async () => {
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                const userId = user.uid;
+                await setDoc(doc(db, 'users', userId), {
+                    InstrumentosMusicales: selectedItems,
+                }, { merge: true });
+                
+                navigation.navigate('Experiencia');
+            } else {
+                Alert.alert('Error', 'Usuario no autenticado.');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Hubo un problema al guardar los instrumentos musicales.');
+            console.error(error);
+        }
     };
 
     return (
         <View style={styles.container}>
-            <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
-            <Text style={styles.title}>Generos Musicales!</Text>
-            <Text style={styles.subtitle}>Elige tus generos musicales favoritos</Text>
+            <Image source={require('../assets/images/logobandup.png')} style={styles.logo} />
+            <Text style={styles.title}>Instrumentos!</Text>
+            <Text style={styles.subtitle}>Elige tus instrumentos favoritos</Text>
             <FlatList
                 contentContainerStyle={styles.checklistContainer}
                 data={items}
@@ -33,11 +54,11 @@ const Generosmusicales = ({ navigation }) => {
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         style={styles.item}
-                        onPress={() => toggleItem(item.id)}
+                        onPress={() => toggleItem(item.name)}
                     >
                         <View style={styles.itemContent}>
                             <Text style={styles.itemText}>
-                                {selectedItems.includes(item.id) ? '☑️' : '⬜️'}
+                                {selectedItems.includes(item.name) ? '☑️' : '⬜️'}
                             </Text>
                             <Text style={styles.itemName}>
                                 {item.name}
@@ -47,12 +68,8 @@ const Generosmusicales = ({ navigation }) => {
                 )}
             />
             <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Code')}>
+                <TouchableOpacity style={styles.button} onPress={saveSelectedItems}>
                     <Text style={styles.buttonText}>Aceptar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.button2} onPress={() => navigation.navigate('Code')}>
-                    <Text style={styles.buttonText}>Omitir</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -141,4 +158,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Generosmusicales;
+export default Instrumentos;

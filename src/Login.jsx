@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
-import  {signInWithEmailAndPassword}  from 'firebase/auth';
-import auth from '../../credenciales';
+import  { auth }  from '../credenciales';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,30 +9,32 @@ const LoginScreen = ({ navigation }) => {
 
   const logueo = async () => {
     try {
+      console.log(`Attempting to log in with email: ${email} and password: ${password}`);
       await signInWithEmailAndPassword(auth, email, password);
       Alert.alert('Iniciando sesión', 'Accediendo...');
       navigation.navigate('HomeTabs');
     } catch (error) {
-      Alert.alert('❌ Error de inicio de sesión', 'Email o contraseña incorrectos, inténtelo nuevamente');
+      console.error("Login error: ", error);
+      Alert.alert('❌ Error de inicio de sesión', `Error: ${error.message}`);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Image source={require('./../../assets/images/logobandup.png')} style={styles.logo} />
+      <Image source={require('../assets/images/logobandup.png')} style={styles.logo} />
       <Text style={styles.title}>Bienvenido a BandUp!</Text>
       <Text style={styles.subtitle1}>Email</Text>
       <TextInput
         style={styles.input}
         placeholder="Tu email"
-        onChangeText={setEmail}
+        onChangeText={(email) => setEmail(email)}
         value={email}
       />
       <Text style={styles.subtitle2}>Contraseña</Text>
       <TextInput
         style={styles.input}
         placeholder="Tu contraseña"
-        onChangeText={setPassword}
+        onChangeText={(password) => setPassword(password)}
         value={password}
         secureTextEntry
       />
@@ -48,6 +50,8 @@ const LoginScreen = ({ navigation }) => {
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -106,5 +110,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
 
 export default LoginScreen;
