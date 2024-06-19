@@ -132,7 +132,7 @@ function App() {
           ),
           headerRight: () => (
             <View style={{ flexDirection: 'row' }}>
-              <TouchableOpacity onPress={() => Alert.alert('Notificaciones')}>
+              <TouchableOpacity onPress={() => Alert.alert("Notificaciones")}>
                 <Ionicons name="notifications-outline" size={25} style={{ marginRight: 15 }} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => Alert.alert('Menú')}>
