@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth, db } from '../credenciales'; 
-import { doc, setDoc } from 'firebase/firestore';
+import {auth} from '../credenciales'; 
+
 
 const Registrarse = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -15,7 +15,7 @@ const Registrarse = ({ navigation }) => {
 
       await sendEmailVerification(user, {
         handleCodeInApp: true,
-        url: 'https://bandup-37f42.firebaseapp.com',
+        url: 'https://prueba1-4d605.firebaseapp.com',
       });
 
       Alert.alert('Verificación enviada', 'Por favor, revisa tu correo electrónico para verificar tu cuenta.')

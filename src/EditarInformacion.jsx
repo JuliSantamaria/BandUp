@@ -1,29 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { auth, db } from '../credenciales';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-const CreateProfile = ({ navigation }) => {
+const EditarInformacion = ({ navigation }) => {
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
 
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          setName(userData.name);
+          setSurname(userData.surname);
+          setDescription(userData.description);
+          setLocation(userData.location);
+        } else {
+          Alert.alert('Error', 'No se encontraron datos de perfil.');
+        }
+      } else {
+        Alert.alert('No autenticado', 'No se pudo encontrar un usuario autenticado.');
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
   const handleSaveProfile = async () => {
+    // Validación de los campos
+    if (!name.trim() || !surname.trim() || !description.trim() || !location.trim()) {
+      Alert.alert('Campos incompletos', 'Por favor completa todos los campos.');
+      return;
+    }
+
     const user = auth.currentUser;
     if (user) {
       try {
-        await setDoc(doc(db, 'users', user.uid), {
+        await updateDoc(doc(db, 'users', user.uid), {
           name,
           surname,
           description,
           location,
-          email: user.email, // Almacenar el email del usuario para referencia
         });
-
-        navigation.navigate('GenerosMusicales');
+        Alert.alert('Éxito', 'Tu perfil ha sido actualizado correctamente.');
+        navigation.goBack();
       } catch (error) {
-        Alert.alert('Error', 'Hubo un error al guardar tu perfil: ' + error.message);
+        Alert.alert('Error', 'Hubo un error al actualizar tu perfil: ' + error.message);
       }
     } else {
       Alert.alert('No autenticado', 'No se pudo encontrar un usuario autenticado.');
@@ -33,7 +62,7 @@ const CreateProfile = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image source={require('../assets/images/logobandup.png')} style={styles.logo} />
-      <Text style={styles.title}>Bienvenido a BandUp!</Text>
+      <Text style={styles.title}>Editar Información del Perfil</Text>
       <Text style={styles.subtitle}>Nombre</Text>
       <TextInput
         style={styles.input}
@@ -63,7 +92,7 @@ const CreateProfile = ({ navigation }) => {
         value={location}
       />
       <TouchableOpacity style={styles.button} onPress={handleSaveProfile}>
-        <Text style={styles.buttonText}>Siguiente</Text>
+        <Text style={styles.buttonText}>Guardar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -75,6 +104,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
   logo: {
     width: 150,
@@ -84,6 +114,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
+    textAlign: 'center',
   },
   subtitle: {
     marginBottom: 10,
@@ -96,6 +127,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 20,
     paddingHorizontal: 10,
+    borderRadius: 5,
   },
   button: {
     backgroundColor: '#d55038',
@@ -103,6 +135,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 5,
     marginBottom: 20,
+    alignSelf: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
@@ -112,4 +145,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateProfile;
+export default EditarInformacion;

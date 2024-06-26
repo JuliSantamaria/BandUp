@@ -19,7 +19,6 @@ async function subirAnuncio(idUsuario, titulo, descripcion, mensaje) {
     } catch (error) {
         console.error("Error al inicializar Firestore: ", error);
         return Promise.reject(error);
-
     }
 }
 

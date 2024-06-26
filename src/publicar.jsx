@@ -1,16 +1,79 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
-import subirAnuncio from '../backend/anuncio/subirAnuncio';
+import { ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
+import * as ImagePicker from 'expo-image-picker';
+import { auth } from '../credenciales';
+import { doc, updateDoc, getFirestore, addDoc, collection, arrayUnion, where } from 'firebase/firestore';
 
 function SubirAnuncio({ navigation }) {
     const [titulo, setTitulo] = useState("");
     const [descripcion, setDescripcion] = useState("");
     const [mensaje, setMensaje] = useState("");
-    const [idUsuario, setIdUsuario] = useState("1");
+    const [imagenes, setImagenes] = useState([]);
 
-    const guardarAnuncio = () => {
+    const subirAnuncio = async (titulo, descripcion, imagenes) => {
+        try {
+            // Paso 1: Crear el anuncio en Firestore y obtener el adId
+            const db = getFirestore();
+            const anuncioRef = await addDoc(collection(db, `anuncios`), {
+                titulo,
+                descripcion,
+                timestamp: Date.now(),
+                userId: auth.currentUser.uid,
+            });
+            const adId = anuncioRef.id;
+            console.log('Anuncio creado con ID: ', adId);
+
+            // Paso 2: Subir las imágenes a Firebase Storage y obtener sus URLs
+            const storage = getStorage();
+            const urls = [];
+
+            for (let imagen of imagenes) {
+                const response = await fetch(imagen.uri);
+                const blob = await response.blob();
+                const imageName = `${Date.now()}_${auth.currentUser.uid}`;
+                const storageRef = ref(storage, `users/${auth.currentUser.uid}/ads/${adId}/images/${imageName}`);
+                await uploadBytes(storageRef, blob);
+                const url = await getDownloadURL(storageRef);
+                urls.push(url);
+                console.log('URL de la imagen: ', url);
+            }
+
+            // Paso 3: Actualizar el documento del anuncio con las URLs de las imágenes
+            await updateDoc(doc(db, `anuncios/${adId}`), {
+                images: urls,
+            });
+            console.log('Anuncio actualizado con URLs de las imágenes');
+        } catch (error) {
+            console.error('Error al crear el anuncio o subir las imágenes: ', error);
+        }
+    };
+
+    const subirImagen = async () => {
+        try {
+            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permissionResult.granted) {
+                Alert.alert('Permisos insuficientes', 'Debe otorgar permisos para acceder a la galería de imágenes.');
+                return;
+            }
+
+            const pickerResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 1,
+            });
+
+            if (!pickerResult.canceled) {
+                const selectedImages = pickerResult.assets.map(asset => ({ uri: asset.uri }));
+                setImagenes([...imagenes, ...selectedImages]);
+            }
+        } catch (error) {
+            console.error('Error al solicitar permisos: ', error);
+        }
+    };
+
+    const handleSubirAnuncio = () => {
         if (!titulo || !descripcion || !mensaje) {
             Alert.alert(
                 "Error",
@@ -19,13 +82,7 @@ function SubirAnuncio({ navigation }) {
             );
             return;
         }
-        subirAnuncio(idUsuario, titulo, descripcion, mensaje)
-            .then(() => {
-                console.log('Anuncio subido');
-            })
-            .catch((error) => {
-                console.log('Error: ', error);
-            });
+        subirAnuncio(titulo, descripcion, imagenes);
     };
 
     return (
@@ -34,32 +91,32 @@ function SubirAnuncio({ navigation }) {
             <TextInput
                 style={styles.input}
                 value={titulo}
-                onChangeText={(e) => setTitulo(e)}
+                onChangeText={setTitulo}
                 placeholder="Titulo"
             />
             <TextInput
                 style={styles.input}
                 value={descripcion}
-                onChangeText={(e) => setDescripcion(e)}
+                onChangeText={setDescripcion}
                 placeholder="Descripcion"
             />
             <TextInput
                 style={styles.input}
                 value={mensaje}
-                onChangeText={(e) => setMensaje(e)}
+                onChangeText={setMensaje}
                 placeholder="Mensaje adicional"
             />
             <View style={styles.buttonsContainer}>
                 <TouchableOpacity 
                     style={styles.roundButtonLeft}
-                    onPress={guardarAnuncio}
+                    onPress={handleSubirAnuncio}
                 >
                     <Icon name="bullhorn" size={30} color="#fff" />
                     <Text style={styles.roundButtonText}>Publicar anuncio</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={styles.roundButtonRight}
-                    onPress={() => console.log('Photo or video pressed')}
+                    onPress={subirImagen}
                 >
                     <Icon name="camera" size={30} color="#fff" />
                     <Text style={styles.roundButtonText}>Foto o video</Text>
@@ -78,41 +135,46 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         backgroundColor: '#fff',
+        marginTop: -50, // Ajusta este valor según necesites
     },
     title: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 'bold',
         marginBottom: 20,
-        color: '#000',
+        color: '#333',
     },
     input: {
-        width: '80%',
-        padding: 10,
+        width: '100%',
+        padding: 15,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
+        borderColor: '#ddd',
+        borderRadius: 10,
+        backgroundColor: '#f9f9f9',
     },
     buttonsContainer: {
         flexDirection: 'row',
-        marginBottom: 20,
+        justifyContent: 'space-between',
+        width: '100%',
     },
     roundButtonLeft: {
-        backgroundColor: '#f39c12',
-        paddingVertical: 10,
+        backgroundColor: '#d35400',
+        paddingVertical: 15,
         paddingHorizontal: 20,
-        borderRadius: 30,
-        marginRight: 10,
+        borderRadius: 10,
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
     },
     roundButtonRight: {
-        backgroundColor: '#ccc',
-        paddingVertical: 10,
+        backgroundColor: '#bbb',
+        paddingVertical: 15,
         paddingHorizontal: 20,
-        borderRadius: 30,
+        borderRadius: 10,
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
     roundButtonText: {
         color: '#fff',

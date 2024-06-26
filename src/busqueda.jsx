@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { db } from '../credenciales';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
@@ -27,13 +28,18 @@ const Busqueda = () => {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Buscar publicaciones..."
-        value={searchTerm}
-        onChangeText={text => setSearchTerm(text)}
-        onSubmitEditing={handleSearch}
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar publicaciones..."
+          value={searchTerm}
+          onChangeText={text => setSearchTerm(text)}
+          onSubmitEditing={handleSearch}
+        />
+        <TouchableOpacity onPress={handleSearch} style={styles.searchIcon}>
+          <Ionicons name="search" size={20} color="white" />
+        </TouchableOpacity>
+      </View>
       {loading ? (
         <Text style={styles.loadingText}>Cargando...</Text>
       ) : (
@@ -57,12 +63,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   searchInput: {
+    flex: 1,
     height: 40,
-    borderColor: 'gray',
+    borderColor: '#d35400', 
     borderWidth: 1,
     paddingHorizontal: 10,
-    marginBottom: 20,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderRightWidth: 0,
+  },
+  searchIcon: {
+    height: 40,
+    width: 40,
+    backgroundColor: '#d35400', 
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     textAlign: 'center',
