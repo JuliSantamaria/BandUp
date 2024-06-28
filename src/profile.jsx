@@ -1,13 +1,12 @@
-import React, { useState, useEffect, act } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { auth, db } from '../credenciales';
 import { doc, getDoc, updateDoc, getDocs, collection, where, query } from 'firebase/firestore';
 import AnunciosPerfil from '../components/AnunciosPerfil';
 import FotosVideosPerfil from '../components/FotosVideosPerfil';
 import ReseñasPerfil from '../components/ReseñasPerfil';
 import * as ImagePicker from 'expo-image-picker';
-import {ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
-
+import { ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('Anuncios');
@@ -23,12 +22,7 @@ const Profile = () => {
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
             setUserData(userDoc.data());
-            const adsCollectionRef = query(collection(db, 'anuncios'), where('userId', '==', user.uid));
-            const adsSnapshot = await getDocs(adsCollectionRef);
-            const ads = [];
-            adsSnapshot.forEach(doc => ads.push({ id: doc.id, ...doc.data() }));
-            setUserAds(ads);
-
+            fetchUserAds(user.uid);
           } else {
             console.log('No existe el documento!');
           }
@@ -40,6 +34,14 @@ const Profile = () => {
 
     fetchUserData();
   }, [activeTab]);
+
+  const fetchUserAds = async (userId) => {
+    const adsCollectionRef = query(collection(db, 'anuncios'), where('userId', '==', userId));
+    const adsSnapshot = await getDocs(adsCollectionRef);
+    const ads = [];
+    adsSnapshot.forEach(doc => ads.push({ id: doc.id, ...doc.data() }));
+    setUserAds(ads);
+  };
 
   const handlePickImage = async () => {
     try {
@@ -57,11 +59,8 @@ const Profile = () => {
 
       if (!pickerResult.canceled) {
         // Subir la imagen a Firebase Storage y guardar la URL en Firestore
-        console.log(pickerResult)
         const uri = pickerResult.assets[0].uri;
-        console.log(uri)
         const imageName = `${auth.currentUser.uid}`;
-        console.log(auth.currentUser.uid)
         const response = await fetch(uri);
         const blob = await response.blob();
         const storage = getStorage();
@@ -93,7 +92,7 @@ const Profile = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Anuncios':
-        return <AnunciosPerfil userAds={userAds}/>;
+        return <AnunciosPerfil userAds={userAds} refreshAds={() => fetchUserAds(auth.currentUser.uid)} />;
       case 'Fotos/Videos':
         return <FotosVideosPerfil />;
       case 'Reseñas':
@@ -119,7 +118,7 @@ const Profile = () => {
           style={styles.profileImage} 
         />
       </TouchableOpacity>
-      <Text style={styles.name}>{userData.name}{userData.surname} </Text>
+      <Text style={styles.name}>{userData.name}{userData.surname}</Text>
       
       <View style={styles.tagsContainer}>
         {userData.InstrumentosMusicales.map((InstrumentosMusicales, index) => (
