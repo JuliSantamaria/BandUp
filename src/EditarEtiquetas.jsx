@@ -22,7 +22,7 @@ const TagList = ({ tags, onAddTag, tagType, isExperience }) => {
             <Ionicons 
               name={iconMap[tagType]}
               size={16}
-              color={tags.includes(item) ? 'white' : 'tomato'}
+              color={tags.includes(item) ? 'white' : '#d35400'}
             />
             <Text style={[styles.tagText, tags.includes(item) && styles.etiquetaTextSeleccionada]}>{item}</Text>
           </View>
@@ -34,7 +34,7 @@ const TagList = ({ tags, onAddTag, tagType, isExperience }) => {
         <Ionicons
           name={isExperience ? "sync" : "add-circle-outline"}
           size={24}
-          color="tomato"
+          color='#d35400'
         />
       </TouchableOpacity>
     </View>
@@ -147,13 +147,13 @@ const styles = {
     borderRadius: 20,
     margin: 5,
     borderWidth: 1,
-    borderColor: 'tomato',
+    borderColor: '#d35400',
   },
   etiquetaSeleccionada: {
-    backgroundColor: 'tomato',
+    backgroundColor: '#d35400',
   },
   tagText: {
-    color: 'tomato',
+    color: '#d35400',
     marginLeft: 5,
   },
   etiquetaTextSeleccionada: {
@@ -169,7 +169,7 @@ const styles = {
   saveButton: {
     marginTop: 20,
     padding: 10,
-    backgroundColor: 'tomato',
+    backgroundColor: '#d35400',
     borderRadius: 20,
     alignItems: 'center',
   },

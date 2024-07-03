@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Image, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import { auth } from '../credenciales';
-import { doc, updateDoc, getFirestore, addDoc, collection, arrayUnion, where } from 'firebase/firestore';
+import { doc, updateDoc, getFirestore, addDoc, collection } from 'firebase/firestore';
 
 function SubirAnuncio({ navigation }) {
     const [titulo, setTitulo] = useState("");
@@ -12,13 +12,14 @@ function SubirAnuncio({ navigation }) {
     const [mensaje, setMensaje] = useState("");
     const [imagenes, setImagenes] = useState([]);
 
-    const subirAnuncio = async (titulo, descripcion, imagenes) => {
+    const subirAnuncio = async (titulo, descripcion, mensaje, imagenes) => {
         try {
             // Paso 1: Crear el anuncio en Firestore y obtener el adId
             const db = getFirestore();
             const anuncioRef = await addDoc(collection(db, `anuncios`), {
                 titulo,
                 descripcion,
+                mensaje,
                 timestamp: Date.now(),
                 userId: auth.currentUser.uid,
             });
@@ -45,6 +46,12 @@ function SubirAnuncio({ navigation }) {
                 images: urls,
             });
             console.log('Anuncio actualizado con URLs de las imágenes');
+
+            Alert.alert('Éxito', 'El anuncio ha sido publicado correctamente.');
+            setTitulo("");
+            setDescripcion("");
+            setMensaje("");
+            navigation.navigate('Home'); // Navegar a la pantalla de Home después de publicar el anuncio
         } catch (error) {
             console.error('Error al crear el anuncio o subir las imágenes: ', error);
         }
@@ -73,6 +80,10 @@ function SubirAnuncio({ navigation }) {
         }
     };
 
+    const eliminarImagen = (uri) => {
+        setImagenes(imagenes.filter(imagen => imagen.uri !== uri));
+    };
+
     const handleSubirAnuncio = () => {
         if (!titulo || !descripcion || !mensaje) {
             Alert.alert(
@@ -82,11 +93,11 @@ function SubirAnuncio({ navigation }) {
             );
             return;
         }
-        subirAnuncio(titulo, descripcion, imagenes);
+        subirAnuncio(titulo, descripcion, mensaje, imagenes);
     };
 
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Publicar</Text>
             <TextInput
                 style={styles.input}
@@ -106,6 +117,16 @@ function SubirAnuncio({ navigation }) {
                 onChangeText={setMensaje}
                 placeholder="Mensaje adicional"
             />
+            <View style={styles.imageContainer}>
+                {imagenes.map((imagen, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                        <Image source={{ uri: imagen.uri }} style={styles.image} />
+                        <TouchableOpacity style={styles.deleteButton} onPress={() => eliminarImagen(imagen.uri)}>
+                            <Icon name="times" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                ))}
+            </View>
             <View style={styles.buttonsContainer}>
                 <TouchableOpacity 
                     style={styles.roundButtonLeft}
@@ -122,7 +143,7 @@ function SubirAnuncio({ navigation }) {
                     <Text style={styles.roundButtonText}>Foto o video</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </ScrollView>
     );
 }
 
@@ -130,12 +151,12 @@ export default SubirAnuncio;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
         backgroundColor: '#fff',
-        marginTop: -50, // Ajusta este valor según necesites
+        marginTop: -50,
     },
     title: {
         fontSize: 26,
@@ -151,6 +172,29 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
         borderRadius: 10,
         backgroundColor: '#f9f9f9',
+    },
+    imageContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
+    imageWrapper: {
+        position: 'relative',
+        margin: 5,
+    },
+    image: {
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+    },
+    deleteButton: {
+        position: 'absolute',
+        top: 5,
+        right: 5,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        borderRadius: 50,
+        padding: 5,
     },
     buttonsContainer: {
         flexDirection: 'row',
