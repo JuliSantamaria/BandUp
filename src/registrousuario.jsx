@@ -15,7 +15,7 @@ const Registrarse = ({ navigation }) => {
 
       await sendEmailVerification(user, {
         handleCodeInApp: true,
-        url: 'https://prueba1-4d605.firebaseapp.com',
+        url: 'https://bandupbdd.firebaseapp.com',
       });
 
       Alert.alert('Verificación enviada', 'Por favor, revisa tu correo electrónico para verificar tu cuenta.')

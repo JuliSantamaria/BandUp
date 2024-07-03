@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from "react-native";
 import comentarAnuncio from "../backend/anuncio/comentarAnuncio";
-import comentarAnuncioBack from "../anuncio/comentarAnuncio";
+
+
 
 function ComentarAnuncio({ id }) {
   const [comentario, setComentario] = useState("");
@@ -55,6 +56,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
   }
+
 });
 
 export default ComentarAnuncio;
+
+

@@ -1,88 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
-import { collection, addDoc, query, onSnapshot, orderBy, where } from 'firebase/firestore';
+import { View, Text, TextInput, Button, FlatList } from 'react-native';
+import { collection, addDoc, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db, auth } from '../credenciales';
 
-const Chat = ({ chatId }) => {
+const ChatScreen = ({ route }) => {
+  const { userId, userName } = route.params;
+  const currentUserId = auth.currentUser.uid;
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    if (chatId) {
-      const messagesCollection = collection(db, 'chats', chatId, 'messages');
-      const q = query(messagesCollection, orderBy('createdAt', 'desc'));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const messages = [];
-        querySnapshot.forEach((doc) => {
-          messages.push({ ...doc.data(), id: doc.id });
-        });
-        setMessages(messages);
-      });
+    const chatId = getChatId(currentUserId, userId);
+    const messagesCollection = collection(db, 'chats', chatId, 'messages');
+    const q = query(messagesCollection, orderBy('createdAt'));
 
-      return () => unsubscribe();
-    }
-  }, [chatId]);
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const msgs = [];
+      querySnapshot.forEach((doc) => {
+        msgs.push({ id: doc.id, ...doc.data() });
+      });
+      setMessages(msgs);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  const getChatId = (id1, id2) => {
+    return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
+  };
 
   const handleSend = async () => {
-    if (message.trim()) {
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+    if (message.length > 0) {
+      const chatId = getChatId(currentUserId, userId);
+      const messagesCollection = collection(db, 'chats', chatId, 'messages');
+      await addDoc(messagesCollection, {
         text: message,
         createdAt: new Date(),
-        uid: auth.currentUser.uid,
-        displayName: auth.currentUser.displayName
+        senderId: currentUserId,
+        receiverId: userId,
       });
       setMessage('');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View>
+      <Text>Chat with {userName}</Text>
       <FlatList
         data={messages}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <View style={styles.message}>
-            <Text>{item.displayName}: {item.text}</Text>
+          <View>
+            <Text>{item.senderId === currentUserId ? 'You' : userName}: {item.text}</Text>
           </View>
         )}
-        keyExtractor={(item) => item.id}
-        inverted
       />
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Escribe un mensaje"
-        />
-        <Button title="Enviar" onPress={handleSend} />
-      </View>
+      <TextInput
+        value={message}
+        onChangeText={setMessage}
+        placeholder="Type a message"
+      />
+      <Button title="Send" onPress={handleSend} />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 10,
-  },
-  message: {
-    marginVertical: 5,
-    padding: 10,
-    backgroundColor: '#f1f1f1',
-    borderRadius: 5,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-  },
-});
-
-export default Chat;
+export default ChatScreen;

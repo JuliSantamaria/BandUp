@@ -23,8 +23,9 @@ import Premium from './src/Premium';
 import EditarInformacion from './src/EditarInformacion';
 import EditarEtiquetas from './src/EditarEtiquetas';
 import AñadirEtiquetas from './src/AñanirEtiquetas';
-import Notificaciones from './src/Notificaciones'
-import Chat from './src/Chat';
+import Notificaciones from './src/Notificaciones';
+import Chat from './components/Chat';
+import ChatScreen from './src/Chats';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -42,7 +43,7 @@ function HomeTabs() {
             iconName = 'search-outline';
           } else if (route.name === 'publicar') {
             iconName = 'add-circle-outline';
-          } else if (route.name === 'mensajes') {
+          } else if (route.name === 'Chats') {
             iconName = 'chatbox-ellipses-outline';
           } else if (route.name === 'Perfil') {
             iconName = 'person';
@@ -58,7 +59,7 @@ function HomeTabs() {
       <Tab.Screen name="Home" component={Home} options={{headerShown: false}} />
       <Tab.Screen name="busqueda" component={busqueda} options={{headerShown: false}} />
       <Tab.Screen name="publicar" component={publicar} options={{headerShown: false}} />
-      <Tab.Screen name="mensajes" component={Chat} options={{headerShown: false}} />
+      <Tab.Screen name="Chats" component={ChatScreen} options={{headerShown: false}} />
       <Tab.Screen name="Perfil" component={Profile} options={{headerShown: false}} />
     </Tab.Navigator>
   );
@@ -147,6 +148,10 @@ function App() {
             ),
           }} 
         />
+        <Stack.Screen 
+          name="Chat" 
+          component={Chat} 
+          options={{ title: 'Chat' }} />
         <Stack.Screen 
           name="Configuraciones" 
           component={Configuraciones} 

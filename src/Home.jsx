@@ -44,7 +44,7 @@ const Home = ({ navigation }) => {
       await darLike(id);
       obtenerTodos(); // Actualizar la lista de anuncios
     } catch (error) {
-      console.error('Error adding like:', error);
+      console.error('Error al añadir like', error);
     }
   };
 
@@ -53,17 +53,21 @@ const Home = ({ navigation }) => {
     if (comentario) {
       try {
         await comentarAnuncio(id, { texto: comentario, fecha: new Date() });
+
         setComentarios({ ...comentarios, [id]: '' }); // Limpiar el campo de comentario
         obtenerTodos(); // Actualizar la lista de anuncios
       } catch (error) {
         console.error('Error adding comment:', error);
+
+        setComentarios({ ...comentarios, [id]: '' });
+        obtenerTodos(); 
+      
       }
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <Button title="Cerrar Sesión" onPress={handleLogout} color="#d35400" />
       <View style={styles.anunciosContainer}>
         <Text style={styles.title}>Obtener todos los anuncios</Text>
         {anuncios.map((anuncio) => (
