@@ -1,32 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Image, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
-import { auth } from '../credenciales';
-import { doc, updateDoc, getFirestore, addDoc, collection } from 'firebase/firestore';
+import { auth, db } from '../credenciales';
+import { doc, updateDoc, getFirestore, addDoc, collection, getDoc } from 'firebase/firestore';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import VistaPreviaAnuncio from '../components/VistaPreviaAnuncio';
 
 function SubirAnuncio({ navigation }) {
     const [titulo, setTitulo] = useState("");
     const [descripcion, setDescripcion] = useState("");
-    const [mensaje, setMensaje] = useState("");
+    const [etiquetas, setEtiquetas] = useState({});
     const [imagenes, setImagenes] = useState([]);
+    const [usuario, setUsuario] = useState(null); // Estado para almacenar datos del usuario
 
-    const subirAnuncio = async (titulo, descripcion, mensaje, imagenes) => {
+    // Obtener datos del usuario al cargar el componente
+    useEffect(() => {
+        const obtenerDatosUsuario = async () => {
+            try {
+                const userDocRef = doc(db, 'users', auth.currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    setUsuario(userDoc.data());
+                } else {
+                    console.log('No se encontraron datos del usuario');
+                }
+            } catch (error) {
+                console.error('Error al obtener datos del usuario:', error);
+            }
+        };
+
+        obtenerDatosUsuario();
+    }, []);
+
+    // Función para subir el anuncio
+    const subirAnuncio = async (titulo, descripcion, etiquetas, imagenes) => {
         try {
-            // Paso 1: Crear el anuncio en Firestore y obtener el adId
-            const db = getFirestore();
-            const anuncioRef = await addDoc(collection(db, `anuncios`), {
+            const userDocRef = doc(db, 'users', auth.currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            let location = '';
+            if (userDoc.exists()) {
+                location = userDoc.data().location || '';
+            }
+
+            // Crear documento de anuncio en Firestore
+            const anuncioRef = await addDoc(collection(db, 'anuncios'), {
                 titulo,
                 descripcion,
-                mensaje,
+                etiquetas,
+                location,
                 timestamp: Date.now(),
                 userId: auth.currentUser.uid,
             });
             const adId = anuncioRef.id;
             console.log('Anuncio creado con ID: ', adId);
 
-            // Paso 2: Subir las imágenes a Firebase Storage y obtener sus URLs
+            // Subir imágenes a Firebase Storage y obtener URLs
             const storage = getStorage();
             const urls = [];
 
@@ -41,22 +71,25 @@ function SubirAnuncio({ navigation }) {
                 console.log('URL de la imagen: ', url);
             }
 
-            // Paso 3: Actualizar el documento del anuncio con las URLs de las imágenes
-            await updateDoc(doc(db, `anuncios/${adId}`), {
+            // Actualizar documento de anuncio con URLs de imágenes
+            await updateDoc(doc(db, 'anuncios', adId), {
                 images: urls,
             });
             console.log('Anuncio actualizado con URLs de las imágenes');
 
+            // Mostrar alerta de éxito y limpiar campos
             Alert.alert('Éxito', 'El anuncio ha sido publicado correctamente.');
             setTitulo("");
             setDescripcion("");
-            setMensaje("");
-            navigation.navigate('Home'); // Navegar a la pantalla de Home después de publicar el anuncio
+            setEtiquetas({});
+            setImagenes([]);
+            navigation.navigate('Home');
         } catch (error) {
             console.error('Error al crear el anuncio o subir las imágenes: ', error);
         }
     };
 
+    // Función para manejar la selección de imágenes desde la galería
     const subirImagen = async () => {
         try {
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -71,7 +104,7 @@ function SubirAnuncio({ navigation }) {
                 quality: 1,
             });
 
-            if (!pickerResult.canceled) {
+            if (!pickerResult.cancelled) {
                 const selectedImages = pickerResult.assets.map(asset => ({ uri: asset.uri }));
                 setImagenes([...imagenes, ...selectedImages]);
             }
@@ -80,12 +113,24 @@ function SubirAnuncio({ navigation }) {
         }
     };
 
+    // Función para eliminar una imagen de la lista
     const eliminarImagen = (uri) => {
         setImagenes(imagenes.filter(imagen => imagen.uri !== uri));
     };
 
+    // Función para eliminar una etiqueta seleccionada
+    const eliminarEtiqueta = (tagType, etiqueta) => {
+        const updatedEtiquetas = { ...etiquetas };
+        updatedEtiquetas[tagType] = updatedEtiquetas[tagType].filter(tag => tag !== etiqueta);
+        if (updatedEtiquetas[tagType].length === 0) {
+            delete updatedEtiquetas[tagType];
+        }
+        setEtiquetas(updatedEtiquetas);
+    };
+
+    // Función para manejar la publicación del anuncio
     const handleSubirAnuncio = () => {
-        if (!titulo || !descripcion || !mensaje) {
+        if (!titulo || !descripcion || Object.keys(etiquetas).length === 0) {
             Alert.alert(
                 "Error",
                 "Todos los campos son obligatorios",
@@ -93,7 +138,16 @@ function SubirAnuncio({ navigation }) {
             );
             return;
         }
-        subirAnuncio(titulo, descripcion, mensaje, imagenes);
+        subirAnuncio(titulo, descripcion, etiquetas, imagenes);
+    };
+
+    // Función para manejar la navegación a la pantalla de añadir etiquetas
+    const handleEtiquetas = () => {
+        navigation.navigate('AñadirEtiquetas', {
+            tagType: 'some_unique_key',
+            currentTags: etiquetas,
+            onAddTag: (updatedTags) => setEtiquetas(updatedTags) // Pasar la función para actualizar etiquetas
+        });
     };
 
     return (
@@ -111,12 +165,25 @@ function SubirAnuncio({ navigation }) {
                 onChangeText={setDescripcion}
                 placeholder="Descripcion"
             />
-            <TextInput
-                style={styles.input}
-                value={mensaje}
-                onChangeText={setMensaje}
-                placeholder="Mensaje adicional"
-            />
+            <TouchableOpacity style={styles.addTagsButton} onPress={handleEtiquetas}>
+                <Ionicons name="pricetag" size={24} color="#fff" />
+                <Text style={styles.addTagsButtonText}>Añadir Etiquetas</Text>
+            </TouchableOpacity>
+            <View style={styles.etiquetasContainer}>
+                {Object.keys(etiquetas).map((tagType) => (
+                    <View key={tagType}>
+                        {etiquetas[tagType].map((etiqueta, index) => (
+                            <View key={index} style={[styles.etiqueta, styles.etiquetaSeleccionada]}>
+                                <Ionicons name={iconMap[tagType]} size={20} color="#fff" />
+                                <Text style={styles.etiquetaText}>{etiqueta}</Text>
+                                <TouchableOpacity onPress={() => eliminarEtiqueta(tagType, etiqueta)}>
+                                    <Icon name="times" size={20} color="#fff" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                ))}
+            </View>
             <View style={styles.imageContainer}>
                 {imagenes.map((imagen, index) => (
                     <View key={index} style={styles.imageWrapper}>
@@ -127,15 +194,23 @@ function SubirAnuncio({ navigation }) {
                     </View>
                 ))}
             </View>
+            {/* Vista previa del anuncio */}
+            <VistaPreviaAnuncio
+                titulo={titulo}
+                descripcion={descripcion}
+                etiquetas={etiquetas}
+                imagenes={imagenes}
+                usuario={usuario}
+            />
             <View style={styles.buttonsContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.roundButtonLeft}
                     onPress={handleSubirAnuncio}
                 >
                     <Icon name="bullhorn" size={30} color="#fff" />
                     <Text style={styles.roundButtonText}>Publicar anuncio</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.roundButtonRight}
                     onPress={subirImagen}
                 >
@@ -173,15 +248,48 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         backgroundColor: '#f9f9f9',
     },
+    addTagsButton: {
+        backgroundColor: 'tomato',
+        padding: 15,
+        borderRadius: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    addTagsButtonText: {
+        color: '#fff',
+        marginLeft: 10,
+        fontSize: 16,
+    },
+    etiquetasContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    etiqueta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'tomato',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+        margin: 5,
+    },
+    etiquetaText: {
+        color: '#fff',
+        marginLeft: 5,
+    },
+    etiquetaSeleccionada: {
+        backgroundColor: 'rgba(255, 99, 71, 0.8)',
+    },
     imageContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'center',
         marginBottom: 20,
     },
     imageWrapper: {
         position: 'relative',
-        margin: 5,
+        marginRight: 10,
+        marginBottom: 10,
     },
     image: {
         width: 100,
@@ -192,7 +300,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 5,
         right: 5,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: 50,
         padding: 5,
     },
@@ -200,29 +308,29 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
+        marginTop: 20,
     },
     roundButtonLeft: {
-        backgroundColor: '#d35400',
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        borderRadius: 10,
         flexDirection: 'row',
+        backgroundColor: 'tomato',
+        padding: 15,
+        borderRadius: 30,
         alignItems: 'center',
-        flex: 1,
-        marginRight: 10,
+        justifyContent: 'center',
+        width: '48%',
     },
     roundButtonRight: {
-        backgroundColor: '#bbb',
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        borderRadius: 10,
         flexDirection: 'row',
+        backgroundColor: 'deepskyblue',
+        padding: 15,
+        borderRadius: 30,
         alignItems: 'center',
-        flex: 1,
+        justifyContent: 'center',
+        width: '48%',
     },
     roundButtonText: {
         color: '#fff',
-        fontSize: 16,
         marginLeft: 10,
+        fontSize: 16,
     },
 });

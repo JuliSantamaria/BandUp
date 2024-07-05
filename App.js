@@ -26,6 +26,7 @@ import AñadirEtiquetas from './src/AñanirEtiquetas';
 import Notificaciones from './src/Notificaciones';
 import Chat from './components/Chat';
 import ChatScreen from './src/Chats';
+import EtiquetasAnuncios from './src/EtiquetasAnuncios';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -173,6 +174,11 @@ function App() {
           name="AñadirEtiquetas" 
           component={AñadirEtiquetas} 
           options={{ title: 'Añadir Etiquetas', headerShown: true }} />
+        <Stack.Screen
+          name="EtiquetasAnuncios"
+          component= {EtiquetasAnuncios}
+          option={{title: 'Añade Etiquetas a tu anuncio', headerShown: true}}
+        />
       </Stack.Navigator>
       <Notificaciones visible={modalVisible} onClose={() => setModalVisible(false)} />
       <BarraMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />

@@ -1,12 +1,20 @@
-import React from "react";
 import appFirebase from '../../credenciales';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 
-async function obtenerTodosAnuncios () {
+async function obtenerTodosAnuncios(filtros) {
     try {
         const db = getFirestore(appFirebase);
         const anunciosRef = collection(db, 'anuncios');
-        const q = query(anunciosRef);
+        let q = query(anunciosRef);
+
+        // Aplicar filtros si existen
+        if (filtros) {
+            for (const [key, values] of Object.entries(filtros)) {
+                if (values.length > 0) {
+                    q = query(q, where(key, 'array-contains-any', values));
+                }
+            }
+        }
 
         return await getDocs(q).then((querySnapshot) => {
             const resultados = [];

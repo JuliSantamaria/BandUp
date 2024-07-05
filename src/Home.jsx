@@ -1,16 +1,23 @@
 import { getAuth, signOut } from 'firebase/auth';
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Button, ScrollView, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, TextInput, Image, Dimensions, RefreshControl } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import obtenerTodosAnuncios from "../backend/anuncio/obtenerTodosAnuncios";
 import darLike from "../backend/anuncio/darLike";
 import comentarAnuncio from "../backend/anuncio/comentarAnuncio";
-
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../credenciales.js";
 
 const Home = ({ navigation }) => {
   const auth = getAuth();
   const [anuncios, setAnuncios] = useState([]);
   const [comentarios, setComentarios] = useState({});
+  const [refreshing, setRefreshing] = useState(false); // Estado para controlar el refresh
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    obtenerTodos().finally(() => setRefreshing(false));
+  };
 
   const handleLogout = async () => {
     try {
@@ -23,19 +30,34 @@ const Home = ({ navigation }) => {
   };
 
   useEffect(() => {
-    const fetchAds = async () => {
-      obtenerTodos();
-    }
-    fetchAds();
+    obtenerTodos();
   }, []);
 
   const obtenerTodos = async () => {
     try {
       const resultados = await obtenerTodosAnuncios();
-      setAnuncios(resultados);
-      console.log(resultados);
+      const anunciosConUsuarios = await Promise.all(resultados.map(async (anuncio) => {
+        const usuario = await obtenerUsuario(anuncio.userId);
+        return { ...anuncio, usuario };
+      }));
+      setAnuncios(anunciosConUsuarios);
     } catch (error) {
       console.log('Error: ', error);
+    }
+  };
+
+  const obtenerUsuario = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        console.log('No existe el usuario con ID:', userId);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error obteniendo usuario:', error);
+      return null;
     }
   };
 
@@ -57,22 +79,42 @@ const Home = ({ navigation }) => {
         setComentarios({ ...comentarios, [id]: '' }); // Limpiar el campo de comentario
         obtenerTodos(); // Actualizar la lista de anuncios
       } catch (error) {
-        console.error('Error adding comment:', error);
+        console.error('Error al añadir comentario:', error);
 
         setComentarios({ ...comentarios, [id]: '' });
         obtenerTodos(); 
-      
       }
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.anunciosContainer}>
-        <Text style={styles.title}>Obtener todos los anuncios</Text>
         {anuncios.map((anuncio) => (
           <View key={anuncio.id} style={styles.anuncio}>
+            {anuncio.usuario && (
+              <View style={styles.usuarioContainer}>
+                <Image
+                  style={styles.usuarioFoto}
+                  source={{ uri: anuncio.usuario.photoURL }}
+                />
+                <View style={styles.userinfo}>
+                  <Text style={styles.usuarioNombre}>{anuncio.usuario.name} {anuncio.usuario.surname}</Text>
+                  <Text style={styles.descripcion}>{anuncio.usuario.description}</Text>
+                </View>
+              </View>
+            )}
             <Text style={styles.anuncioTitulo}>{anuncio.titulo}</Text>
+            {anuncio.images && anuncio.images.length > 0 && (
+              <Image
+                style={styles.imagenAnuncio}
+                source={{ uri: anuncio.images[0] }}
+                resizeMode="cover"
+              />
+            )}
             <Text style={styles.anuncioDescripcion}>{anuncio.descripcion}</Text>
             <Text style={styles.anuncioMensaje}>{anuncio.mensaje}</Text>
             <View style={styles.likeCommentContainer}>
@@ -99,25 +141,17 @@ const Home = ({ navigation }) => {
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f4f2ee',
   },
   anunciosContainer: {
-    marginTop: 20,
-    width: '100%',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
+    paddingTop: 10,
   },
   anuncio: {
+    width: '100%',
     backgroundColor: 'white',
-    padding: 15,
-    marginBottom: 15,
+    marginBottom: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
@@ -127,24 +161,54 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 3,
   },
-  anuncioTitulo: {
-    fontSize: 20,
+  usuarioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  usuarioFoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  userinfo: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  usuarioNombre: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#d35400',
+  },
+  descripcion: {
+    fontSize: 14,
+    color: '#777',
+  },
+  anuncioTitulo: {
+    fontSize: 18,
+    color: '#333',
     marginBottom: 5,
+  },
+  imagenAnuncio: {
+    width: '100%',
+    aspectRatio: 16/9, // Relación de aspecto estándar, puedes ajustarla según tus necesidades
+    borderRadius: 10,
+    marginBottom: 10,
   },
   anuncioDescripcion: {
     fontSize: 16,
     color: '#555',
-    marginBottom: 5,
+    marginBottom: 10,
   },
   anuncioMensaje: {
     fontSize: 14,
     color: '#777',
+    marginBottom: 10,
   },
   likeCommentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 10,
   },
   iconButton: {
     marginRight: 10,
@@ -152,11 +216,11 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 40,
-    margin: 12,
     borderWidth: 1,
     padding: 10,
     borderColor: '#ddd',
     borderRadius: 5,
+    marginRight: 10,
   },
   commentButton: {
     backgroundColor: '#d35400',
@@ -165,7 +229,7 @@ const styles = StyleSheet.create({
   },
   commentButtonText: {
     color: 'white',
-  }
+  },
 });
 
 export default Home;
