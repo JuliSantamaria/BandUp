@@ -8,6 +8,12 @@ import { doc, updateDoc, getFirestore, addDoc, collection, getDoc } from 'fireba
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import VistaPreviaAnuncio from '../components/VistaPreviaAnuncio';
 
+const iconMap = {
+    instrumentos: 'musical-notes-outline',
+    generos: 'musical-note-outline',
+    experiencia: 'school-outline'
+};
+
 function SubirAnuncio({ navigation }) {
     const [titulo, setTitulo] = useState("");
     const [descripcion, setDescripcion] = useState("");
@@ -231,7 +237,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         backgroundColor: '#fff',
-        marginTop: -50,
+        marginTop: -70,
     },
     title: {
         fontSize: 26,
@@ -249,9 +255,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
     },
     addTagsButton: {
-        backgroundColor: 'tomato',
+        backgroundColor: '#d35400',
         padding: 15,
-        borderRadius: 10,
+        borderRadius: 30,
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 20,
@@ -268,7 +274,7 @@ const styles = StyleSheet.create({
     etiqueta: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'tomato',
+        backgroundColor: '#d35400',
         paddingVertical: 5,
         paddingHorizontal: 10,
         borderRadius: 20,
@@ -312,7 +318,7 @@ const styles = StyleSheet.create({
     },
     roundButtonLeft: {
         flexDirection: 'row',
-        backgroundColor: 'tomato',
+        backgroundColor: '#d35400',
         padding: 15,
         borderRadius: 30,
         alignItems: 'center',
@@ -321,7 +327,7 @@ const styles = StyleSheet.create({
     },
     roundButtonRight: {
         flexDirection: 'row',
-        backgroundColor: 'deepskyblue',
+        backgroundColor: '#d35400',
         padding: 15,
         borderRadius: 30,
         alignItems: 'center',

@@ -1,3 +1,4 @@
+// VistaPreviaAnuncio.jsx
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
@@ -13,7 +14,7 @@ const VistaPreviaAnuncio = ({ titulo, descripcion, etiquetas, imagenes, usuario 
             <Text style={styles.titulo}>{titulo}</Text>
             <View style={styles.imagenesContainer}>
                 {imagenes.map((imagen, index) => (
-                    <Image key={index} source={{ uri: imagen.uri }} style={styles.imagen} />
+                    <Image key={index} source={{ uri: imagen.uri }} style={styles.imagen} resizeMode="cover" />
                 ))}
             </View>
             <Text style={styles.descripcion}>{descripcion}</Text>
@@ -24,8 +25,6 @@ const VistaPreviaAnuncio = ({ titulo, descripcion, etiquetas, imagenes, usuario 
                     </View>
                 ))}
             </View>
-            
-            
         </View>
     );
 };
@@ -47,7 +46,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 2,
         elevation: 3,
-        
     },
     titulo: {
         fontSize: 20,
@@ -74,15 +72,16 @@ const styles = StyleSheet.create({
     },
     imagenesContainer: {
         width: '100%',
-        
         borderRadius: 10,
-        marginBottom: 10
+        marginBottom: 10,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        height: 250,
     },
     imagen: {
-        width: 100,
-        height: 100,
+        width: '100%',
         borderRadius: 10,
-        marginRight: 10,
+        marginBottom: 5,
     },
     usuarioContainer: {
         flexDirection: 'row',

@@ -1,5 +1,6 @@
 import appFirebase from '../../credenciales';
-import { getFirestore, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { notificacionPorComentario } from '../notificacion/notificaciones';
 
 async function comentarAnuncio(id, comentario) {
     try {
@@ -9,7 +10,8 @@ async function comentarAnuncio(id, comentario) {
         await updateDoc(anuncioRef, {
             comentarios: arrayUnion(comentario)
         });
-
+        const destinatario = (await getDoc(anuncioRef)).data().userId;
+        notificacionPorComentario(destinatario, comentario); // Disparador para notificacion de comentario
         return { message: "Comentario añadido con éxito" };
     } catch (error) {
         console.error("Error al comentar publicación: ", error);

@@ -22,11 +22,12 @@ import Configuraciones from './src/Configuraciones';
 import Premium from './src/Premium';
 import EditarInformacion from './src/EditarInformacion';
 import EditarEtiquetas from './src/EditarEtiquetas';
-import AñadirEtiquetas from './src/AñanirEtiquetas';
+import AñadirEtiquetas from './src/AñadirEtiquetas';
 import Notificaciones from './src/Notificaciones';
 import Chat from './components/Chat';
 import ChatScreen from './src/Chats';
 import EtiquetasAnuncios from './src/EtiquetasAnuncios';
+import PerfilUsuarioAjeno from './src/PerfilUsuarioAjeno'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -179,6 +180,12 @@ function App() {
           component= {EtiquetasAnuncios}
           option={{title: 'Añade Etiquetas a tu anuncio', headerShown: true}}
         />
+        <Stack.Screen
+          name="PerfilAjeno"
+          component= {PerfilUsuarioAjeno}
+          option={{title: 'Perfilaj', headerShown: false}}
+        />
+        
       </Stack.Navigator>
       <Notificaciones visible={modalVisible} onClose={() => setModalVisible(false)} />
       <BarraMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />

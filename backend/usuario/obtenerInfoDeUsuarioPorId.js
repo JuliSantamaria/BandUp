@@ -1,25 +1,20 @@
-import appFirebase from '../../util/conexion';
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import appFirebase from '../../credenciales';
+import { getFirestore, getDoc, doc} from 'firebase/firestore';
 
-async function obtenerInfoDeUsuarioPorId(idUsuario) {
+async function obtenerInfoDeUsuarioPorId(userId) {
     try {
         const db = getFirestore(appFirebase);
-        const usuariosRef = collection(db, 'usuarios');
-        const q = query(usuariosRef, where('idUsuario', '==', idUsuario));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            console.log("No existe el usuario con el ID proporcionado");
-            return null;
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          return userDoc.data();
+        } else {
+          console.log('No existe el usuario con ID:', userId);
+          return null;
         }
-
-        const usuarioDoc = querySnapshot.docs[0];
-        console.log('Documento del usuario:', usuarioDoc);
-        return usuarioDoc.data();
-    } catch (error) {
-        console.error("Error al inicializar Firestore o crear la consulta: ", error);
-        return Promise.reject(error);
-    }
+      } catch (error) {
+        console.error('Error obteniendo usuario:', error);
+        return null;
+      }
 }
 
 export default obtenerInfoDeUsuarioPorId;

@@ -1,9 +1,9 @@
 import { getAuth, signOut } from 'firebase/auth';
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, TextInput, Image, Dimensions, RefreshControl } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, TextInput, Image, RefreshControl } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import obtenerTodosAnuncios from "../backend/anuncio/obtenerTodosAnuncios";
-import darLike from "../backend/anuncio/darLike";
+import darLike, { quitarLike } from "../backend/anuncio/darLike";
 import comentarAnuncio from "../backend/anuncio/comentarAnuncio";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../credenciales.js";
@@ -12,7 +12,8 @@ const Home = ({ navigation }) => {
   const auth = getAuth();
   const [anuncios, setAnuncios] = useState([]);
   const [comentarios, setComentarios] = useState({});
-  const [refreshing, setRefreshing] = useState(false); // Estado para controlar el refresh
+  const [usuariosComentarios, setUsuariosComentarios] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -61,10 +62,14 @@ const Home = ({ navigation }) => {
     }
   };
 
-  const handleLike = async (id) => {
+  const handleLike = async (id, status) => {
     try {
-      await darLike(id);
-      obtenerTodos(); // Actualizar la lista de anuncios
+      if (status === 1) {
+        await quitarLike(id);
+      } else {
+        await darLike(id);
+      }
+      obtenerTodos();
     } catch (error) {
       console.error('Error al añadir like', error);
     }
@@ -74,18 +79,45 @@ const Home = ({ navigation }) => {
     const comentario = comentarios[id];
     if (comentario) {
       try {
-        await comentarAnuncio(id, { texto: comentario, fecha: new Date() });
-
-        setComentarios({ ...comentarios, [id]: '' }); // Limpiar el campo de comentario
-        obtenerTodos(); // Actualizar la lista de anuncios
+        await comentarAnuncio(id, { autor: auth.currentUser.uid, texto: comentario, fecha: new Date() });
+        setComentarios({ ...comentarios, [id]: '' });
+        obtenerTodos();
       } catch (error) {
         console.error('Error al añadir comentario:', error);
-
         setComentarios({ ...comentarios, [id]: '' });
-        obtenerTodos(); 
+        obtenerTodos();
       }
     }
   };
+
+  const fetchUsuarioComentario = async (userId) => {
+    const usuario = await obtenerUsuario(userId);
+    return usuario ? `${usuario.name} ${usuario.surname}` : 'Usuario desconocido';
+  };
+
+  const verPerfilUsuario = (userId) => {
+    navigation.navigate('PerfilAjeno', { usuarioId: userId });
+  };
+
+  useEffect(() => {
+    const fetchUsuariosComentarios = async () => {
+      const usuariosTemp = {};
+      for (const anuncio of anuncios) {
+        if (anuncio.comentarios) {
+          for (const comentario of anuncio.comentarios) {
+            if (!usuariosTemp[comentario.autor]) {
+              usuariosTemp[comentario.autor] = await fetchUsuarioComentario(comentario.autor);
+            }
+          }
+        }
+      }
+      setUsuariosComentarios(usuariosTemp);
+    };
+
+    if (anuncios.length > 0) {
+      fetchUsuariosComentarios();
+    }
+  }, [anuncios]);
 
   return (
     <ScrollView
@@ -97,10 +129,12 @@ const Home = ({ navigation }) => {
           <View key={anuncio.id} style={styles.anuncio}>
             {anuncio.usuario && (
               <View style={styles.usuarioContainer}>
-                <Image
-                  style={styles.usuarioFoto}
-                  source={{ uri: anuncio.usuario.photoURL }}
-                />
+                <TouchableOpacity onPress={() => verPerfilUsuario(anuncio.usuario.userId)}>
+                  <Image
+                    style={styles.usuarioFoto}
+                    source={{ uri: anuncio.usuario.photoURL }}
+                  />
+                </TouchableOpacity>
                 <View style={styles.userinfo}>
                   <Text style={styles.usuarioNombre}>{anuncio.usuario.name} {anuncio.usuario.surname}</Text>
                   <Text style={styles.descripcion}>{anuncio.usuario.description}</Text>
@@ -118,18 +152,34 @@ const Home = ({ navigation }) => {
             <Text style={styles.anuncioDescripcion}>{anuncio.descripcion}</Text>
             <Text style={styles.anuncioMensaje}>{anuncio.mensaje}</Text>
             <View style={styles.likeCommentContainer}>
-              <TouchableOpacity style={styles.iconButton} onPress={() => handleLike(anuncio.id)}>
-                <Ionicons name="heart-outline" size={24} color="#d35400" />
+              <TouchableOpacity style={styles.iconButton} onPress={
+                Array.isArray(anuncio.likes) && anuncio.likes.includes(auth.currentUser.uid) ? 
+                  () => handleLike(anuncio.id, 1) : () => handleLike(anuncio.id, 0)
+              }>
+                {
+                  Array.isArray(anuncio.likes) && anuncio.likes.includes(auth.currentUser.uid) ? 
+                  <Ionicons name="heart" size={24} color="#d35400" /> : 
+                  <Ionicons name="heart-outline" size={24} color="#d35400" />
+                }
               </TouchableOpacity>
+              <Text style={{ marginRight: 10 }}>{Array.isArray(anuncio.likes) ? anuncio.likes.length : 0}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Escribe un comentario"
                 value={comentarios[anuncio.id] || ''}
                 onChangeText={(text) => setComentarios({ ...comentarios, [anuncio.id]: text })}
               />
-              <TouchableOpacity style={styles.commentButton} onPress={() => handleComment(anuncio.id)}>
-                <Text style={styles.commentButtonText}>Comentar</Text>
+              <TouchableOpacity style={styles.iconButton} onPress={() => handleComment(anuncio.id)}>
+                <Ionicons name="send" size={24} color="#d35400" />
               </TouchableOpacity>
+            </View>
+            <View>
+              {anuncio.comentarios && anuncio.comentarios.slice(-1).map((comentario, index) => (
+                <View key={index} style={styles.comments}>
+                  <Text>{usuariosComentarios[comentario.autor] + ": " + comentario.texto || 'Cargando...'}</Text>
+                  {anuncio.comentarios.length - 1 > 0 && <Text style={{ color: '#777' }}>Ver los {anuncio.comentarios.length - 1} comentario{anuncio.comentarios.length - 1 > 1 && <Text>s</Text>}...</Text>}
+                </View>
+              ))}
             </View>
           </View>
         ))}
@@ -142,6 +192,8 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: '#f4f2ee',
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
   anunciosContainer: {
     paddingTop: 10,
@@ -152,13 +204,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingVertical: 15,
     paddingHorizontal: 15,
-    borderRadius: 10,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: '#ddd',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   usuarioContainer: {
@@ -179,6 +231,7 @@ const styles = StyleSheet.create({
   usuarioNombre: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333',
   },
   descripcion: {
     fontSize: 14,
@@ -188,10 +241,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#333',
     marginBottom: 5,
+    fontWeight: 'bold',
   },
   imagenAnuncio: {
     width: '100%',
-    aspectRatio: 16/9, // Relación de aspecto estándar, puedes ajustarla según tus necesidades
+    aspectRatio: 16 / 9,
     borderRadius: 10,
     marginBottom: 10,
   },
@@ -222,14 +276,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 10,
   },
-  commentButton: {
-    backgroundColor: '#d35400',
-    padding: 10,
-    borderRadius: 5,
-  },
-  commentButtonText: {
-    color: 'white',
-  },
+  comments: {
+    paddingTop: 20,
+  }
 });
 
 export default Home;

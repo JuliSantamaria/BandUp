@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, Image } from 'react-native';
-import { collection, getDocs, query, where, orderBy, startAt, endAt } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, startAt, endAt } from 'firebase/firestore';
 import { db, auth } from '../credenciales';
+import { Ionicons } from '@expo/vector-icons';
 
 const UsersList = ({ navigation }) => {
   const [users, setUsers] = useState([]);
@@ -47,12 +48,15 @@ const UsersList = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Chats</Text>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Buscar usuarios"
-        onChangeText={(text) => setSearchQuery(text)}
-        value={searchQuery}
-      />
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="gray" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar usuarios"
+          onChangeText={(text) => setSearchQuery(text)}
+          value={searchQuery}
+        />
+      </View>
       <FlatList
         data={users}
         keyExtractor={item => item.id}
@@ -67,6 +71,7 @@ const UsersList = ({ navigation }) => {
             </View>
           </TouchableOpacity>
         )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </View>
   );
@@ -76,35 +81,57 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#f9f9f9',
   },
   heading: {
     fontSize: 25,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   searchInput: {
+    flex: 1,
     height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 15,
   },
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
+    marginRight: 15,
   },
   userName: {
     fontSize: 18,
+    fontWeight: '500',
+  },
+  separator: {
+    height: 10,
   },
 });
 
