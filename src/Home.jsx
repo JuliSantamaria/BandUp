@@ -42,6 +42,7 @@ const Home = ({ navigation }) => {
         return { ...anuncio, usuario };
       }));
       setAnuncios(anunciosConUsuarios);
+      console.log('Anuncios:', anunciosConUsuarios);
     } catch (error) {
       console.log('Error: ', error);
     }
@@ -129,7 +130,7 @@ const Home = ({ navigation }) => {
           <View key={anuncio.id} style={styles.anuncio}>
             {anuncio.usuario && (
               <View style={styles.usuarioContainer}>
-                <TouchableOpacity onPress={() => verPerfilUsuario(anuncio.usuario.userId)}>
+                <TouchableOpacity onPress={() => verPerfilUsuario(anuncio.userId)}>
                   <Image
                     style={styles.usuarioFoto}
                     source={{ uri: anuncio.usuario.photoURL }}

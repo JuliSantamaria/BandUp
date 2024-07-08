@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import { obtenerNotificaciones, marcarNotificacionComoVista } from '../backend/notificacion/notificaciones';
+import obtenerInfoDeUsuarioPorId from '../backend/usuario/obtenerInfoDeUsuarioPorId';
+import { useFocusEffect } from '@react-navigation/native';
+/*
 const notificationsData = [
   { id: '1', user: 'Usuario1', action: 'Le ha gustado tu anuncio', read: false },
   { id: '2', user: 'Usuario2', action: 'Comentó tu anuncio', read: false },
@@ -9,13 +12,15 @@ const notificationsData = [
   { id: '4', user: 'Usuario4', action: 'Le ha gustado tu anuncio', read: true },
   { id: '6', user: 'Usuario6', action: 'Comenzó a seguirte', read: false },
 ];
+*/
+
 
 const Notificaciones = ({ visible, onClose }) => {
-  const [notifications, setNotifications] = useState(notificationsData);
+  const [notifications, setNotifications] = useState([]);
 
   const markAsRead = (id) => {
     const updatedNotifications = notifications.map(item =>
-      item.id === id ? { ...item, read: true } : item
+      item.id === id ? { ...item, visto: '0' } : item
     );
     setNotifications(updatedNotifications);
   };
@@ -23,6 +28,24 @@ const Notificaciones = ({ visible, onClose }) => {
   const handleNotificationPress = (id) => {
     markAsRead(id);
   };
+
+  const handleDataUser = async (id) => {
+    const dataUser = await obtenerInfoDeUsuarioPorId(id);
+    return dataUser;
+  };
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const notifications = await obtenerNotificaciones();
+      const notificacionesConUser = await Promise.all(notifications.map(async (notificacion) => {
+        const usuario = await handleDataUser(notificacion.emisor);
+        return { ...notificacion, usuario: usuario.name };
+      }));
+      setNotifications(notificacionesConUser);
+      console.log('Notificaciones:', notificacionesConUser);
+    };
+    fetchNotifications();
+  }, [onClose]);
 
   return (
     <View style={[styles.modalContainer, visible ? styles.visible : styles.hidden]}>
@@ -36,12 +59,12 @@ const Notificaciones = ({ visible, onClose }) => {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.notification, item.read ? styles.readNotification : styles.unreadNotification]}
-              onPress={() => handleNotificationPress(item.id)}
+              style={[styles.notification, item.visto === '0' ? styles.readNotification : styles.unreadNotification]}
+              onPress={() => {marcarNotificacionComoVista(item.id); handleNotificationPress(item.id);}}
             >
-              {!item.read && <View style={styles.notificationIndicator} />}
+              {item.visto === '1' && <View style={styles.notificationIndicator} />}
               <Text style={styles.notificationText}>
-                <Text style={styles.userName}>{item.user}</Text> {item.action}
+                <Text style={styles.userName}>{item.usuario}</Text> {item.mensaje}
               </Text>
             </TouchableOpacity>
           )}
