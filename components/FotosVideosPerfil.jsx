@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Modal, Button } from 'react-native';
 import { obtenerImagenes } from '../backend/anuncio/obtenerImagenes';
-
+import { auth } from '../credenciales';
 const FotosVideosPerfil = ( {uid} ) => {
   console.log(uid)
+  console.log(auth.currentUser.uid)
   const [imagenes, setImagenes] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
+  
   const handleImagenes = () => {
     obtenerImagenes(uid).then((imagenes) => {
       setImagenes(imagenes);
