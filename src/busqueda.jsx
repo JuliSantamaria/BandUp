@@ -74,8 +74,9 @@ const Busqueda = () => {
               const userData = userDoc.data();
               resultsSet.add({
                 ...anuncioData,
-                userName: userData.nombre,
-                userLastName: userData.apellido,
+                userName: userData.name,
+                description: userData.description,
+                userLastName: userData.surname,
                 userPhotoURL: userData.photoURL,
               });
             }
@@ -107,13 +108,21 @@ const Busqueda = () => {
 
   const renderAnuncio = ({ item }) => (
     <View style={styles.anuncioContainer}>
-      <Image source={{ uri: item.imagenURL }} style={styles.anuncioImage} />
+      <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
+        {console.log(item)}
+        {item.userPhotoURL && <Image source={{ uri: item.userPhotoURL }} style={styles.userPhoto} />}
+        <View>
+          <Text style={styles.userName}>{item.userName} {item.userLastName}</Text>
+          <Text style={{fontSize: 12, color: 'gray'}}>{item.description}</Text>
+        </View>
+      </View>
       <View style={styles.anuncioContent}>
         <Text style={styles.anuncioTitulo}>{item.titulo}</Text>
+        {item.images && item.images.length > 0 && item.images.map((image, index) => (
+          <Image key={index} source={{ uri: image }} style={styles.anuncioImage} />
+        ))}
         <Text style={styles.anuncioDescripcion}>{item.descripcion}</Text>
         <Text style={styles.anuncioLocation}>{item.location}</Text>
-        {item.userPhotoURL && <Image source={{ uri: item.userPhotoURL }} style={styles.userPhoto} />}
-        <Text style={styles.userName}>{item.userName} {item.userLastName}</Text>
       </View>
     </View>
   );
@@ -253,7 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   anuncioContainer: {
-    flexDirection: 'row',
+    flexDirection: 'colums',
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
@@ -262,9 +271,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   anuncioImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
+    width: '100%',
+    height: 200,
+    marginBottom: 10,
+    borderRadius: 15,
   },
   anuncioContent: {
     flex: 1,
@@ -273,10 +283,11 @@ const styles = StyleSheet.create({
   anuncioTitulo: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 10,
   },
   anuncioDescripcion: {
     fontSize: 16,
-    color: '#555',
+    marginBottom: 5,
   },
   anuncioLocation: {
     fontSize: 14,
@@ -286,7 +297,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginTop: 10,
+    marginRight: 10,
   },
   userName: {
     fontSize: 16,
