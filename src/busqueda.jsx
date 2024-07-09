@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { db } from '../credenciales';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { obtenerAnuncios } from '../backend/motorDeBusqueda/busquedaAnuncios';
+import { set } from 'date-fns';
 
 const etiquetasPredefinidas = {
   instrumentos: ['Guitarra', 'Bajo', 'Piano', 'Batería', 'Flauta', 'Otro'],
@@ -19,9 +21,6 @@ const Busqueda = () => {
   const [selectedEtiquetas, setSelectedEtiquetas] = useState({});
   const [location, setLocation] = useState('');
   const [photoURL, setPhotoURL] = useState(null);
-  const [UserName, setUserName] = useState(null);
-  const [Surname, setSurname] = useState(null);
-  const [images, setimages] = useState(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -33,10 +32,6 @@ const Busqueda = () => {
           const userSnap = await getDoc(userDoc);
           if (userSnap.exists()) {
             setPhotoURL(userSnap.data().photoURL);
-            setUserName(userSnap.data().UserName);
-            setSurname(userSnap.data().Surname);
-            setimages(userSnap.data().images);
-
           } else {
             console.log('No such document!');
           }
@@ -76,16 +71,15 @@ const Busqueda = () => {
           const querySnapshot = await getDocs(q);
           for (const docSnap of querySnapshot.docs) {
             const anuncioData = docSnap.data();
-            const imagen = await getDoc(doc(db, 'anuncios'));
             const userDoc = await getDoc(doc(db, 'users', anuncioData.userId));
             if (userDoc.exists()) {
               const userData = userDoc.data();
               resultsSet.add({
                 ...anuncioData,
                 userName: userData.name,
+                description: userData.description,
                 userLastName: userData.surname,
                 userPhotoURL: userData.photoURL,
-                
               });
             }
           }
@@ -98,6 +92,28 @@ const Busqueda = () => {
     }
     setLoading(false);
   };
+
+  const handleSearchV2 = async () => {
+    setLoading(true);
+    try {
+      const data = await obtenerAnuncios(searchTerm, location, selectedEtiquetas);
+      for (const d of data) {
+        const userDoc = await getDoc(doc(db, 'users', d.userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          d.userName = userData.name;
+          d.description = userData.description;
+          d.userLastName = userData.surname;
+          d.userPhotoURL = userData.photoURL;
+        }
+      }
+      setResults(data);
+    } catch (error) {
+      console.error('Error al buscar publicaciones:', error);
+    }
+    setLoading(false);
+  };
+
 
   const handleSelectEtiqueta = (tagType, etiqueta) => {
     const updatedEtiquetas = { ...selectedEtiquetas };
@@ -116,15 +132,19 @@ const Busqueda = () => {
 
   const renderAnuncio = ({ item }) => (
     <View style={styles.anuncioContainer}>
-      <View style={styles.userInfoContainer}>
+      <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
+        {console.log(item)}
         {item.userPhotoURL && <Image source={{ uri: item.userPhotoURL }} style={styles.userPhoto} />}
-        <View style={styles.userNameContainer}>
+        <View>
           <Text style={styles.userName}>{item.userName} {item.userLastName}</Text>
+          <Text style={{fontSize: 12, color: 'gray'}}>{item.description}</Text>
         </View>
       </View>
-      <Image source={{ uri: item.imagenURL }} style={styles.anuncioImage} />
       <View style={styles.anuncioContent}>
         <Text style={styles.anuncioTitulo}>{item.titulo}</Text>
+        {item.images && item.images.length > 0 && item.images.map((image, index) => (
+          <Image key={index} source={{ uri: image }} style={styles.anuncioImage} />
+        ))}
         <Text style={styles.anuncioDescripcion}>{item.descripcion}</Text>
         <Text style={styles.anuncioLocation}>{item.location}</Text>
       </View>
@@ -140,9 +160,9 @@ const Busqueda = () => {
             placeholder="Buscar publicaciones..."
             value={searchTerm}
             onChangeText={text => setSearchTerm(text)}
-            onSubmitEditing={handleSearch}
+            //onSubmitEditing={handleSearchV2}
           />
-          <TouchableOpacity onPress={handleSearch} style={styles.searchIcon} activeOpacity={0.7}>
+          <TouchableOpacity onPress={handleSearchV2} style={styles.searchIcon} activeOpacity={0.7}>
             <Ionicons name="search" size={20} color="#d35400" />
           </TouchableOpacity>
         </View>
@@ -207,7 +227,7 @@ const Busqueda = () => {
             style={styles.saveButton}
             onPress={() => {
               setModalVisible(false);
-              handleSearch();
+              handleSearchV2();
             }}
           >
             <Text style={styles.saveButtonText}>Aceptar</Text>
@@ -253,86 +273,49 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
   },
   filterIcon: {
+    height: 40,
+    width: 40,
     backgroundColor: '#d35400',
-    padding: 10,
     borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginLeft: 10,
   },
   loadingText: {
     textAlign: 'center',
-    marginTop: 20,
+    fontSize: 18,
   },
-  modalContainer: {
-    padding: 20,
-    paddingBottom: 60,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d35400',
+  anuncioContainer: {
+    flexDirection: 'colums',
     padding: 10,
-    marginBottom: 20,
-    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   },
-  sectionTitle: {
+  anuncioImage: {
+    width: '100%',
+    height: 200,
+    marginBottom: 10,
+    borderRadius: 15,
+  },
+  anuncioContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  anuncioTitulo: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  etiquetasContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  etiqueta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  etiquetaSeleccionada: {
-    backgroundColor: 'tomato',
-  },
-  etiquetaText: {
-    marginLeft: 5,
-    color: 'tomato',
-  },
-  etiquetaTextSeleccionada: {
-    color: 'white',
-  },
-  saveButton: {
-    backgroundColor: '#d35400',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  anuncioDescripcion: {
     fontSize: 16,
+    marginBottom: 5,
   },
-  anuncioContainer: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 5,
-  },
-  userInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+  anuncioLocation: {
+    fontSize: 14,
+    color: '#777',
   },
   userPhoto: {
     width: 40,
@@ -340,34 +323,67 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 10,
   },
-  userNameContainer: {
-    justifyContent: 'center',
-  },
   userName: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  anuncioImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
+  modalContainer: {
+    padding: 20,
+    backgroundColor: 'white',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
-  anuncioContent: {
-    flexDirection: 'column',
+  input: {
+    height: 40,
+    borderColor: '#d35400',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
-  anuncioTitulo: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginVertical: 10,
   },
-  anuncioDescripcion: {
-    fontSize: 14,
-    marginBottom: 5,
+  etiquetasContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
-  anuncioLocation: {
-    fontSize: 12,
-    color: 'gray',
+  etiqueta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 20,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#d35400',
+  },
+  etiquetaSeleccionada: {
+    backgroundColor: '#d35400',
+  },
+  etiquetaText: {
+    color: '#d35400',
+    marginLeft: 5,
+  },
+  etiquetaTextSeleccionada: {
+    color: 'white',
+  },
+  saveButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#d35400',
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

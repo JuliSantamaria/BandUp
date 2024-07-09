@@ -103,7 +103,7 @@ const Home = ({ navigation }) => {
   };
 
   const verPerfilUsuario = (userId) => {
-    navigation.navigate('Perfil', { usuarioId: userId });
+    navigation.navigate('PerfilAjeno', { usuarioId: userId });
   };
 
   useEffect(() => {
