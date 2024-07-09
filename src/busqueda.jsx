@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { db } from '../credenciales';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { obtenerAnuncios } from '../backend/motorDeBusqueda/busquedaAnuncios';
+import { set } from 'date-fns';
 
 const etiquetasPredefinidas = {
   instrumentos: ['Guitarra', 'Bajo', 'Piano', 'Batería', 'Flauta', 'Otro'],
@@ -91,6 +93,28 @@ const Busqueda = () => {
     setLoading(false);
   };
 
+  const handleSearchV2 = async () => {
+    setLoading(true);
+    try {
+      const data = await obtenerAnuncios(searchTerm, location, selectedEtiquetas);
+      for (const d of data) {
+        const userDoc = await getDoc(doc(db, 'users', d.userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          d.userName = userData.name;
+          d.description = userData.description;
+          d.userLastName = userData.surname;
+          d.userPhotoURL = userData.photoURL;
+        }
+      }
+      setResults(data);
+    } catch (error) {
+      console.error('Error al buscar publicaciones:', error);
+    }
+    setLoading(false);
+  };
+
+
   const handleSelectEtiqueta = (tagType, etiqueta) => {
     const updatedEtiquetas = { ...selectedEtiquetas };
     if (!updatedEtiquetas[tagType]) {
@@ -136,9 +160,9 @@ const Busqueda = () => {
             placeholder="Buscar publicaciones..."
             value={searchTerm}
             onChangeText={text => setSearchTerm(text)}
-            onSubmitEditing={handleSearch}
+            //onSubmitEditing={handleSearchV2}
           />
-          <TouchableOpacity onPress={handleSearch} style={styles.searchIcon} activeOpacity={0.7}>
+          <TouchableOpacity onPress={handleSearchV2} style={styles.searchIcon} activeOpacity={0.7}>
             <Ionicons name="search" size={20} color="#d35400" />
           </TouchableOpacity>
         </View>
@@ -203,7 +227,7 @@ const Busqueda = () => {
             style={styles.saveButton}
             onPress={() => {
               setModalVisible(false);
-              handleSearch();
+              handleSearchV2();
             }}
           >
             <Text style={styles.saveButtonText}>Aceptar</Text>
