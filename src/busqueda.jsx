@@ -19,6 +19,9 @@ const Busqueda = () => {
   const [selectedEtiquetas, setSelectedEtiquetas] = useState({});
   const [location, setLocation] = useState('');
   const [photoURL, setPhotoURL] = useState(null);
+  const [UserName, setUserName] = useState(null);
+  const [Surname, setSurname] = useState(null);
+  const [images, setimages] = useState(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -30,6 +33,10 @@ const Busqueda = () => {
           const userSnap = await getDoc(userDoc);
           if (userSnap.exists()) {
             setPhotoURL(userSnap.data().photoURL);
+            setUserName(userSnap.data().UserName);
+            setSurname(userSnap.data().Surname);
+            setimages(userSnap.data().images);
+
           } else {
             console.log('No such document!');
           }
@@ -69,14 +76,16 @@ const Busqueda = () => {
           const querySnapshot = await getDocs(q);
           for (const docSnap of querySnapshot.docs) {
             const anuncioData = docSnap.data();
+            const imagen = await getDoc(doc(db, 'anuncios'));
             const userDoc = await getDoc(doc(db, 'users', anuncioData.userId));
             if (userDoc.exists()) {
               const userData = userDoc.data();
               resultsSet.add({
                 ...anuncioData,
-                userName: userData.nombre,
-                userLastName: userData.apellido,
+                userName: userData.name,
+                userLastName: userData.surname,
                 userPhotoURL: userData.photoURL,
+                
               });
             }
           }
@@ -107,13 +116,17 @@ const Busqueda = () => {
 
   const renderAnuncio = ({ item }) => (
     <View style={styles.anuncioContainer}>
+      <View style={styles.userInfoContainer}>
+        {item.userPhotoURL && <Image source={{ uri: item.userPhotoURL }} style={styles.userPhoto} />}
+        <View style={styles.userNameContainer}>
+          <Text style={styles.userName}>{item.userName} {item.userLastName}</Text>
+        </View>
+      </View>
       <Image source={{ uri: item.imagenURL }} style={styles.anuncioImage} />
       <View style={styles.anuncioContent}>
         <Text style={styles.anuncioTitulo}>{item.titulo}</Text>
         <Text style={styles.anuncioDescripcion}>{item.descripcion}</Text>
         <Text style={styles.anuncioLocation}>{item.location}</Text>
-        {item.userPhotoURL && <Image source={{ uri: item.userPhotoURL }} style={styles.userPhoto} />}
-        <Text style={styles.userName}>{item.userName} {item.userLastName}</Text>
       </View>
     </View>
   );
@@ -240,115 +253,121 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
   },
   filterIcon: {
-    height: 40,
-    width: 40,
     backgroundColor: '#d35400',
+    padding: 10,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginLeft: 10,
   },
   loadingText: {
     textAlign: 'center',
-    fontSize: 18,
-  },
-  anuncioContainer: {
-    flexDirection: 'row',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginBottom: 10,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-  },
-  anuncioImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-  },
-  anuncioContent: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  anuncioTitulo: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  anuncioDescripcion: {
-    fontSize: 16,
-    color: '#555',
-  },
-  anuncioLocation: {
-    fontSize: 14,
-    color: '#777',
-  },
-  userPhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginTop: 10,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    marginTop: 20,
   },
   modalContainer: {
     padding: 20,
-    backgroundColor: 'white',
+    paddingBottom: 60,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   input: {
-    height: 40,
-    borderColor: '#d35400',
     borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    borderColor: '#d35400',
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 8,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginVertical: 10,
+    marginBottom: 10,
   },
   etiquetasContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: 20,
   },
   etiqueta: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
     padding: 10,
+    backgroundColor: '#f5f5f5',
     borderRadius: 20,
-    margin: 5,
-    borderWidth: 1,
-    borderColor: '#d35400',
+    marginRight: 10,
+    marginBottom: 10,
   },
   etiquetaSeleccionada: {
-    backgroundColor: '#d35400',
+    backgroundColor: 'tomato',
   },
   etiquetaText: {
-    color: '#d35400',
     marginLeft: 5,
+    color: 'tomato',
   },
   etiquetaTextSeleccionada: {
     color: 'white',
   },
   saveButton: {
-    marginTop: 20,
-    padding: 10,
     backgroundColor: '#d35400',
-    borderRadius: 20,
+    padding: 15,
+    borderRadius: 8,
     alignItems: 'center',
   },
   saveButtonText: {
     color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  anuncioContainer: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  userPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  userNameContainer: {
+    justifyContent: 'center',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  anuncioImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  anuncioContent: {
+    flexDirection: 'column',
+  },
+  anuncioTitulo: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  anuncioDescripcion: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  anuncioLocation: {
+    fontSize: 12,
+    color: 'gray',
   },
 });
 
