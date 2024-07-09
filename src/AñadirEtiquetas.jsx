@@ -18,68 +18,72 @@ const iconMap = {
 const EtiquetasAnuncios = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { currentTags, onAddTag } = route.params;
+  const { currentTags } = route.params;
+
+  const onAddTag = route.params?.onAddTag;
 
   const [etiquetas, setEtiquetas] = useState(currentTags || {});
 
   const handleSelectEtiqueta = (tagType, etiqueta) => {
-    const updatedEtiquetas = { ...etiquetas };
-    if (!updatedEtiquetas[tagType]) {
-      updatedEtiquetas[tagType] = [];
-    }
+      const updatedEtiquetas = { ...etiquetas };
+      if (!updatedEtiquetas[tagType]) {
+          updatedEtiquetas[tagType] = [];
+      }
 
-    if (updatedEtiquetas[tagType].includes(etiqueta)) {
-      updatedEtiquetas[tagType] = updatedEtiquetas[tagType].filter(tag => tag !== etiqueta);
-    } else {
-      updatedEtiquetas[tagType].push(etiqueta);
-    }
+      if (updatedEtiquetas[tagType].includes(etiqueta)) {
+          updatedEtiquetas[tagType] = updatedEtiquetas[tagType].filter(tag => tag !== etiqueta);
+      } else {
+          updatedEtiquetas[tagType].push(etiqueta);
+      }
 
-    setEtiquetas(updatedEtiquetas);
+      setEtiquetas(updatedEtiquetas);
   };
 
   const handleSave = () => {
-    onAddTag(etiquetas);
-    navigation.goBack();
+      if (onAddTag) {
+          onAddTag(etiquetas);
+      }
+      navigation.goBack();
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Agregar Etiquetas</Text>
-      {Object.keys(etiquetasPredefinidas).map((tagType, index) => (
-        <View key={index}>
-          <Text style={styles.sectionTitle}>{tagType.charAt(0).toUpperCase() + tagType.slice(1)}:</Text>
-          <View style={styles.etiquetasContainer}>
-            {etiquetasPredefinidas[tagType].map((etiqueta, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[
-                  styles.etiqueta,
-                  etiquetas[tagType]?.includes(etiqueta) && styles.etiquetaSeleccionada,
-                ]}
-                onPress={() => handleSelectEtiqueta(tagType, etiqueta)}
-              >
-                <Ionicons
-                  name={iconMap[tagType]}
-                  size={16}
-                  color={etiquetas[tagType]?.includes(etiqueta) ? 'white' : 'tomato'}
-                />
-                <Text
-                  style={[
-                    styles.etiquetaText,
-                    etiquetas[tagType]?.includes(etiqueta) && styles.etiquetaTextSeleccionada,
-                  ]}
-                >
-                  {etiqueta}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      ))}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Aceptar</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Agregar Etiquetas</Text>
+          {Object.keys(etiquetasPredefinidas).map((tagType, index) => (
+              <View key={index}>
+                  <Text style={styles.sectionTitle}>{tagType.charAt(0).toUpperCase() + tagType.slice(1)}:</Text>
+                  <View style={styles.etiquetasContainer}>
+                      {etiquetasPredefinidas[tagType].map((etiqueta, idx) => (
+                          <TouchableOpacity
+                              key={idx}
+                              style={[
+                                  styles.etiqueta,
+                                  etiquetas[tagType]?.includes(etiqueta) && styles.etiquetaSeleccionada,
+                              ]}
+                              onPress={() => handleSelectEtiqueta(tagType, etiqueta)}
+                          >
+                              <Ionicons
+                                  name={iconMap[tagType]}
+                                  size={16}
+                                  color={etiquetas[tagType]?.includes(etiqueta) ? 'white' : 'tomato'}
+                              />
+                              <Text
+                                  style={[
+                                      styles.etiquetaText,
+                                      etiquetas[tagType]?.includes(etiqueta) && styles.etiquetaTextSeleccionada,
+                                  ]}
+                              >
+                                  {etiqueta}
+                              </Text>
+                          </TouchableOpacity>
+                      ))}
+                  </View>
+              </View>
+          ))}
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Aceptar</Text>
+          </TouchableOpacity>
+      </ScrollView>
   );
 };
 

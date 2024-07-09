@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, Modal, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,68 +45,49 @@ const Busqueda = () => {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      let q = collection(db, 'anuncios');
+      const anunciosRef = collection(db, 'anuncios');
+      const filters = [];
 
       if (searchTerm) {
         const normalizedSearchTerm = searchTerm.toLowerCase();
-        q = query(
-          q,
-          where('titulo', '>=', normalizedSearchTerm),
-          where('titulo', '<=', normalizedSearchTerm + '\uf8ff')
-        );
+        filters.push(where('titulo', '>=', normalizedSearchTerm));
+        filters.push(where('titulo', '<=', normalizedSearchTerm + '\uf8ff'));
       }
 
       if (location) {
         const formattedLocation = location.charAt(0).toUpperCase() + location.slice(1).toLowerCase();
-        q = query(
-          q,
-          where('location', '==', formattedLocation)
-        );
+        filters.push(where('location', '>=', formattedLocation));
+        filters.push(where('location', '<=', formattedLocation + '\uf8ff'));
       }
 
-      const etiquetasQueries = [];
+      const selectedKeys = Object.keys(selectedEtiquetas);
+      let resultsSet = new Set();
 
-      Object.keys(selectedEtiquetas).forEach(tagType => {
-        selectedEtiquetas[tagType].forEach(tag => {
-          etiquetasQueries.push(
-            query(q, where(`etiquetas.${tagType}`, 'array-contains', tag))
-          );
-        });
-      });
-
-      if (etiquetasQueries.length === 0 && !searchTerm && !location) {
-        q = collection(db, 'anuncios');
-      }
-
-      const promises = etiquetasQueries.length > 0 ? etiquetasQueries.map(query => getDocs(query)) : [getDocs(q)];
-      const snapshots = await Promise.all(promises);
-
-      const resultadosFiltrados = [];
-      const idsVistos = new Set();
-
-      snapshots.forEach(snapshot => {
-        snapshot.docs.forEach(doc => {
-          const publicacion = doc.data();
-          const id = doc.id;
-          if (!idsVistos.has(id)) {
-            resultadosFiltrados.push(publicacion);
-            idsVistos.add(id);
+      for (const key of selectedKeys) {
+        for (const tag of selectedEtiquetas[key]) {
+          const q = query(anunciosRef, ...filters, where(`etiquetas.${key}`, 'array-contains', tag));
+          const querySnapshot = await getDocs(q);
+          for (const docSnap of querySnapshot.docs) {
+            const anuncioData = docSnap.data();
+            const userDoc = await getDoc(doc(db, 'users', anuncioData.userId));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              resultsSet.add({
+                ...anuncioData,
+                userName: userData.nombre,
+                userLastName: userData.apellido,
+                userPhotoURL: userData.photoURL,
+              });
+            }
           }
-        });
-      });
+        }
+      }
 
-      setResults(resultadosFiltrados);
+      setResults(Array.from(resultsSet));
     } catch (error) {
       console.error('Error al buscar publicaciones:', error);
     }
     setLoading(false);
-  };
-
-  const limpiarFiltros = () => {
-    setSearchTerm('');
-    setLocation('');
-    setSelectedEtiquetas({});
-    setResults([]);
   };
 
   const handleSelectEtiqueta = (tagType, etiqueta) => {
@@ -124,6 +104,19 @@ const Busqueda = () => {
 
     setSelectedEtiquetas(updatedEtiquetas);
   };
+
+  const renderAnuncio = ({ item }) => (
+    <View style={styles.anuncioContainer}>
+      <Image source={{ uri: item.imagenURL }} style={styles.anuncioImage} />
+      <View style={styles.anuncioContent}>
+        <Text style={styles.anuncioTitulo}>{item.titulo}</Text>
+        <Text style={styles.anuncioDescripcion}>{item.descripcion}</Text>
+        <Text style={styles.anuncioLocation}>{item.location}</Text>
+        {item.userPhotoURL && <Image source={{ uri: item.userPhotoURL }} style={styles.userPhoto} />}
+        <Text style={styles.userName}>{item.userName} {item.userLastName}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -150,13 +143,7 @@ const Busqueda = () => {
         <FlatList
           data={results}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.resultItem}>
-              <Text style={styles.resultText}>{item.titulo}</Text>
-              <Text style={styles.resultText}>{item.descripcion}</Text>
-              <Text style={styles.resultText}>{item.location}</Text>
-            </View>
-          )}
+          renderItem={renderAnuncio}
         />
       )}
       <Modal
@@ -265,13 +252,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
   },
-  resultItem: {
+  anuncioContainer: {
+    flexDirection: 'row',
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   },
-  resultText: {
+  anuncioImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+  },
+  anuncioContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  anuncioTitulo: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  anuncioDescripcion: {
     fontSize: 16,
+    color: '#555',
+  },
+  anuncioLocation: {
+    fontSize: 14,
+    color: '#777',
+  },
+  userPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   modalContainer: {
     padding: 20,
@@ -280,15 +299,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   input: {
     height: 40,
-    borderColor: '#ddd',
+    borderColor: '#d35400',
     borderWidth: 1,
-    marginBottom: 20,
+    borderRadius: 20,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 18,

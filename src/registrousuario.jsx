@@ -1,14 +1,35 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import {auth} from '../credenciales'; 
-
+import { auth } from '../credenciales';
 
 const Registrarse = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const validateEmail = (email) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const minLength = 6;
+    const hasNumber = /\d/;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+    return password.length >= minLength && hasNumber.test(password) && hasSpecialChar.test(password);
+  };
+
   const handleSignUp = async () => {
+    if (!validateEmail(email)) {
+      Alert.alert('❌ Email inválido', 'Por favor, introduce un email válido.');
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      Alert.alert('❌ Contraseña inválida', 'La contraseña debe tener al menos 6 caracteres, incluir un número y un carácter especial.');
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -18,9 +39,7 @@ const Registrarse = ({ navigation }) => {
         url: 'https://bandupbdd.firebaseapp.com',
       });
 
-      Alert.alert('Verificación enviada', 'Por favor, revisa tu correo electrónico para verificar tu cuenta.')
       navigation.navigate('profile');
-      
     } catch (error) {
       Alert.alert('❌ Error en el registro', error.message);
     }

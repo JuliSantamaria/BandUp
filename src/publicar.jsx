@@ -7,6 +7,9 @@ import { auth, db } from '../credenciales';
 import { doc, updateDoc, getFirestore, addDoc, collection, getDoc } from 'firebase/firestore';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import VistaPreviaAnuncio from '../components/VistaPreviaAnuncio';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
 const iconMap = {
     instrumentos: 'musical-notes-outline',
@@ -19,7 +22,7 @@ function SubirAnuncio({ navigation }) {
     const [descripcion, setDescripcion] = useState("");
     const [etiquetas, setEtiquetas] = useState({});
     const [imagenes, setImagenes] = useState([]);
-    const [usuario, setUsuario] = useState(null); // Estado para almacenar datos del usuario
+    const [usuario, setUsuario] = useState(null); 
 
     // Obtener datos del usuario al cargar el componente
     useEffect(() => {
@@ -152,11 +155,23 @@ function SubirAnuncio({ navigation }) {
         navigation.navigate('AñadirEtiquetas', {
             tagType: 'some_unique_key',
             currentTags: etiquetas,
-            onAddTag: (updatedTags) => setEtiquetas(updatedTags) // Pasar la función para actualizar etiquetas
+            onAddTag: (updatedTags) => setEtiquetas(updatedTags) 
         });
     };
 
-    return (
+useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+        navigation.setParams({
+            onAddTag: (updatedTags) => setEtiquetas(updatedTags)
+        });
+    });
+
+    return unsubscribe;
+}, [navigation]);
+    
+    
+    
+return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Publicar</Text>
             <TextInput
@@ -200,7 +215,7 @@ function SubirAnuncio({ navigation }) {
                     </View>
                 ))}
             </View>
-            {/* Vista previa del anuncio */}
+            
             <VistaPreviaAnuncio
                 titulo={titulo}
                 descripcion={descripcion}

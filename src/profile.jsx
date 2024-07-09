@@ -8,10 +8,15 @@ import ReseñasPerfil from '../components/ReseñasPerfil';
 import * as ImagePicker from 'expo-image-picker';
 import { ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
 
-const Profile = () => {
+const Profile = ({navigation}) => {
   const [activeTab, setActiveTab] = useState('Anuncios');
   const [userData, setUserData] = useState(null);
   const [userAds, setUserAds] = useState([]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    obtenerTodos().finally(() => setRefreshing(false));
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -22,6 +27,7 @@ const Profile = () => {
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
             setUserData(userDoc.data());
+            console.log(userDoc.data())
             fetchUserAds(user.uid);
           } else {
             console.log('No existe el documento!');
@@ -92,11 +98,11 @@ const Profile = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Anuncios':
-        return <AnunciosPerfil userAds={userAds} refreshAds={() => fetchUserAds(auth.currentUser.uid)} />;
+        return <AnunciosPerfil borrar='0' description={userData.description} name={userData.name} surname={userData.surname} profileImage={userData.photoURL && userData.photoURL} userAds={userAds} refreshAds={() => fetchUserAds(auth.currentUser.uid)} />;
       case 'Fotos/Videos':
-        return <FotosVideosPerfil />;
+        return <FotosVideosPerfil uid={auth.currentUser.uid} />;
       case 'Reseñas':
-        return <ReseñasPerfil />;
+        return <ReseñasPerfil uid={auth.currentUser.uid} reseniasIniciales={userData.resenias ? userData.resenias : null} navigation={navigation}/>;
       default:
         return <AnunciosPerfil />;
     }
@@ -113,12 +119,15 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handlePickImage}>
-        <Image 
-          source={userData.photoURL ? { uri: userData.photoURL } : require('../assets/images/defaultprofile.png')} 
-          style={styles.profileImage} 
-        />
+        <View style={styles.imageContainer}>
+          <Image 
+            source={userData.photoURL ? { uri: userData.photoURL } : require('../assets/images/defaultprofile.png')} 
+            style={styles.profileImage} 
+            resizeMode='cover' // Puedes probar con 'contain' si 'cover' no funciona como esperas
+          />
+        </View>
       </TouchableOpacity>
-      <Text style={styles.name}>{userData.name}{userData.surname}</Text>
+      <Text style={styles.name}>{userData.name} {userData.surname}</Text>
       
       <View style={styles.tagsContainer}>
         {userData.InstrumentosMusicales.map((InstrumentosMusicales, index) => (
@@ -163,12 +172,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
   },
-  profileImage: {
+  imageContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
+    overflow: 'hidden',
     marginBottom: 10,
-    
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
   },
   name: {
     fontSize: 24,
@@ -178,6 +191,8 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     marginBottom: 20,
+    flexWrap: 'wrap', // Para que las etiquetas se ajusten a la pantalla y no se corten
+    justifyContent: 'center', // Centrar las etiquetas
   },
   tag: {
     backgroundColor: '#d35400', // Naranja más oscuro
@@ -185,6 +200,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 10,
     marginRight: 5,
+    marginBottom: 5, // Añadir un margen inferior para que haya espacio entre filas
   },
   tagText: {
     color: '#fff',
@@ -207,11 +223,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#d35400', // Naranja más oscuro
+    borderBottomColor: '#d35400', // Naranja más oscuro para la pestaña activa
   },
   tabText: {
     fontSize: 16,
-    color: '#333',
+    fontWeight: 'bold',
   },
   contentContainer: {
     flex: 1,

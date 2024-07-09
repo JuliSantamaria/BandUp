@@ -183,7 +183,7 @@ function App() {
         <Stack.Screen
           name="PerfilAjeno"
           component= {PerfilUsuarioAjeno}
-          option={{title: 'Perfilaj', headerShown: false}}
+          option={{title: 'Perfilaj', headerShown: true}}
         />
         
       </Stack.Navigator>

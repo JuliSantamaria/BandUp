@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert } from
 import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../credenciales'; // Asegúrate de importar correctamente tus credenciales de Firebase
 
-const AnunciosPerfil = ({ userAds, refreshAds }) => {
+const AnunciosPerfil = ({ borrar, userAds, refreshAds, profileImage, name, surname, description }) => {
   const handleDelete = async (anuncioId) => {
     try {
       const anuncioDocRef = doc(db, 'anuncios', anuncioId);
@@ -37,18 +37,28 @@ const AnunciosPerfil = ({ userAds, refreshAds }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Anuncios</Text>
       {userAds && userAds.length > 0 ? (
         <FlatList
+          style={{ width: '100%' }}	
           data={userAds}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.anuncio}>
               <View style={styles.anuncioHeader}>
+                <View style={{flexDirection: 'row', alignContent: 'center', alignItems: 'center'}}>
+                  <Image source={{ uri: profileImage }} style={styles.usuarioFoto} />
+                  <View>
+                    <Text style={styles.usuarioNombre}>{name} {surname}</Text>
+                    <Text style={styles.descripcion}>{description}</Text>
+                  </View>
+                </View>
                 <Text style={styles.anuncioTitulo}>{item.titulo}</Text>
+                {
+                borrar === '0' &&
                 <TouchableOpacity onPress={() => confirmDelete(item.id)} style={styles.deleteButton}>
-                  <Text style={styles.deleteButtonText}>X</Text>
-                </TouchableOpacity>
+                <Text style={styles.deleteButtonText}>X</Text>
+              </TouchableOpacity>
+              }
               </View>
               <Text style={styles.anuncioDescripcion}>{item.descripcion}</Text>
               <View style={styles.imagenesContainer}>
@@ -72,8 +82,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 0,
     backgroundColor: '#fff',
+    width: '100%'
   },
   title: {
     fontSize: 24,
@@ -90,13 +101,13 @@ const styles = StyleSheet.create({
     width: '100%', // Opcional: ajusta el ancho según tus necesidades
   },
   anuncioHeader: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   anuncioTitulo: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 5,
   },
   deleteButton: {
     position: 'absolute',
@@ -122,9 +133,35 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   imagen: {
-    width: 100,
-    height: 100,
-    borderRadius: 5,
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  usuarioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  usuarioFoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 100,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  userinfo: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  usuarioNombre: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  descripcion: {
+    fontSize: 14,
+    color: '#777',
   },
 });
 

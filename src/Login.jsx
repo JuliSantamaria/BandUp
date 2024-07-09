@@ -14,8 +14,7 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert('Iniciando sesión', 'Accediendo...');
       navigation.navigate('HomeTabs');
     } catch (error) {
-      console.error("Login error: ", error);
-      Alert.alert('❌ Error de inicio de sesión', `Error: ${error.message}`);
+      Alert.alert('❌ Error de inicio de sesión', 'Usuario o contraseña incorrectos');
     }
   };
 

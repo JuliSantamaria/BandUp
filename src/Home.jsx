@@ -91,13 +91,19 @@ const Home = ({ navigation }) => {
     }
   };
 
+  const iconMap = {
+    instrumentos: 'musical-notes-outline',
+    generos: 'musical-note-outline',
+    experiencia: 'school-outline'
+  };
+
   const fetchUsuarioComentario = async (userId) => {
     const usuario = await obtenerUsuario(userId);
     return usuario ? `${usuario.name} ${usuario.surname}` : 'Usuario desconocido';
   };
 
   const verPerfilUsuario = (userId) => {
-    navigation.navigate('PerfilAjeno', { usuarioId: userId });
+    navigation.navigate('Perfil', { usuarioId: userId });
   };
 
   useEffect(() => {
@@ -138,6 +144,7 @@ const Home = ({ navigation }) => {
                 </TouchableOpacity>
                 <View style={styles.userinfo}>
                   <Text style={styles.usuarioNombre}>{anuncio.usuario.name} {anuncio.usuario.surname}</Text>
+                  <Text style={styles.ubicacion}>{anuncio.usuario.location}</Text>
                   <Text style={styles.descripcion}>{anuncio.usuario.description}</Text>
                 </View>
               </View>
@@ -152,6 +159,19 @@ const Home = ({ navigation }) => {
             )}
             <Text style={styles.anuncioDescripcion}>{anuncio.descripcion}</Text>
             <Text style={styles.anuncioMensaje}>{anuncio.mensaje}</Text>
+            {/* Mostrar etiquetas */}
+            <View style={styles.etiquetasContainer}>
+              {anuncio.etiquetas && Object.keys(anuncio.etiquetas).map((tagType) => (
+                <View key={tagType} style={styles.etiquetaGrupo}>
+                  {anuncio.etiquetas[tagType].map((etiqueta, index) => (
+                    <View key={index} style={styles.etiqueta}>
+                      <Ionicons name={iconMap[tagType]} size={20} color="#fff" />
+                      <Text style={styles.etiquetaText}>{etiqueta}</Text>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
             <View style={styles.likeCommentContainer}>
               <TouchableOpacity style={styles.iconButton} onPress={
                 Array.isArray(anuncio.likes) && anuncio.likes.includes(auth.currentUser.uid) ? 
@@ -226,60 +246,84 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   userinfo: {
-    flex: 1,
     flexDirection: 'column',
   },
   usuarioNombre: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+  },
+  ubicacion: {
+    fontSize: 12,
+    color: 'gray',
   },
   descripcion: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: 12,
+    color: 'gray',
   },
   anuncioTitulo: {
     fontSize: 18,
-    color: '#333',
-    marginBottom: 5,
     fontWeight: 'bold',
-  },
-  imagenAnuncio: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: 10,
     marginBottom: 10,
   },
   anuncioDescripcion: {
     fontSize: 16,
-    color: '#555',
     marginBottom: 10,
   },
   anuncioMensaje: {
     fontSize: 14,
-    color: '#777',
+    color: 'gray',
     marginBottom: 10,
+  },
+  imagenAnuncio: {
+    width: '100%',
+    height: 200,
+    marginBottom: 10,
+    borderRadius: 15,
+  },
+  etiquetasContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  etiquetaGrupo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  etiqueta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d35400',
+    borderRadius: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginRight: 5,
+  },
+  etiquetaText: {
+    color: 'white',
+    fontSize: 14,
+    marginLeft: 5,
   },
   likeCommentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 10,
   },
   iconButton: {
-    marginRight: 10,
+    padding: 5,
   },
   input: {
     flex: 1,
     height: 40,
-    borderWidth: 1,
-    padding: 10,
     borderColor: '#ddd',
-    borderRadius: 5,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     marginRight: 10,
   },
   comments: {
-    paddingTop: 20,
-  }
+    marginTop: 10,
+  },
 });
 
 export default Home;
